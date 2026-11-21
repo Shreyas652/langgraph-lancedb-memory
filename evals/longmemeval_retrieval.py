@@ -20,17 +20,18 @@ from agent_memory.embedder import FastEmbedEmbedder
 from agent_memory.store import MemoryStore
 
 
-def load_cases(path: Path, limit: int | None = None) -> list[dict]:
+def load_cases(path: Path, limit: int | None = None, offset: int = 0) -> list[dict]:
     """Load the official JSON and omit abstentions, as its retrieval protocol does."""
     cases = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(cases, list):
         raise ValueError("Expected a list of LongMemEval cases")
     cases = [case for case in cases if not case["question_id"].endswith("_abs")]
+    if offset < 0:
+        raise ValueError("offset must be nonnegative")
     if limit is not None:
         if limit < 1:
             raise ValueError("limit must be positive")
-        cases = cases[:limit]
-    return cases
+    return cases[offset : offset + limit if limit is not None else None]
 
 
 def seed_sessions(store: MemoryStore, cases: list[dict], batch_size: int = 128) -> None:
@@ -81,7 +82,15 @@ def seed_sessions(store: MemoryStore, cases: list[dict], batch_size: int = 128) 
     store.create_indexes()
 
 
-def measure(store: MemoryStore, cases: list[dict], mode: str, k: int) -> dict[str, float]:
+def measure(
+    store: MemoryStore,
+    cases: list[dict],
+    mode: str,
+    k: int,
+    *,
+    latencies_out: list[float] | None = None,
+    ranks_out: list[int] | None = None,
+) -> dict[str, float]:
     """Measure evidence-session recall and MRR over non-abstention cases."""
     hits_1 = hits_5 = hits_k = 0
     reciprocal_rank = 0.0
@@ -95,11 +104,15 @@ def measure(store: MemoryStore, cases: list[dict], mode: str, k: int) -> dict[st
             for session_id in case["answer_session_ids"]
         }
         rank = next((i for i, row in enumerate(found, 1) if row.id in expected), None)
+        if ranks_out is not None:
+            ranks_out.append(rank or 0)
         hits_1 += rank == 1
         hits_5 += rank is not None and rank <= 5
         hits_k += rank is not None
         reciprocal_rank += 1 / rank if rank else 0
     n = len(cases)
+    if latencies_out is not None:
+        latencies_out.extend(latencies)
     return {
         "recall_1": hits_1 / n,
         "recall_5": hits_5 / n,
@@ -112,14 +125,22 @@ def measure(store: MemoryStore, cases: list[dict], mode: str, k: int) -> dict[st
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dataset", type=Path, required=True)
-    parser.add_argument("--limit", type=int, help="First N non-abstention cases: pilot only")
+    parser.add_argument("--limit", type=int, help="Number of non-abstention cases to run")
+    parser.add_argument("--offset", type=int, default=0, help="Skip this many non-abstention cases")
+    parser.add_argument("--count", action="store_true", help="Print eligible case count and exit")
+    parser.add_argument(
+        "--json-output", type=Path, help="Write machine-readable result for aggregation"
+    )
     parser.add_argument("--weights", type=float, nargs="+", default=[0.5, 0.7, 0.9])
     parser.add_argument("--k", type=int, default=10)
     parser.add_argument("--offline", action="store_true")
     args = parser.parse_args()
     if args.k < 5:
         parser.error("--k must be at least 5")
-    cases = load_cases(args.dataset, args.limit)
+    if args.count:
+        print(len(load_cases(args.dataset)))
+        return
+    cases = load_cases(args.dataset, args.limit, args.offset)
     if not cases:
         parser.error("No non-abstention cases found")
     embedder = FastEmbedEmbedder(local_files_only=args.offline)
@@ -128,13 +149,40 @@ def main() -> None:
         seed_sessions(store, cases)
         print(f"Indexed {store.table.count_rows()} sessions for {len(cases)} questions")
         print("Mode,Weight,Recall@1,Recall@5,Recall@K,MRR,MedianMs")
+        results = {}
         for mode, weight in [("vector", 1.0), *(("hybrid", w) for w in args.weights)]:
             store.hybrid_vector_weight = weight
-            score = measure(store, cases, mode, args.k)
+            latencies: list[float] = []
+            ranks: list[int] = []
+            score = measure(
+                store, cases, mode, args.k, latencies_out=latencies, ranks_out=ranks
+            )
+            results[f"{mode}:{weight:.2f}"] = {
+                "score": score,
+                "latencies_ms": latencies,
+                "ranks": ranks,
+            }
             print(
                 f"{mode},{weight:.2f},{score['recall_1']:.3f},{score['recall_5']:.3f},"
                 f"{score['recall_k']:.3f},{score['mrr']:.3f},{score['median_ms']:.1f}"
             )
+        if args.json_output is not None:
+            args.json_output.parent.mkdir(parents=True, exist_ok=True)
+            temporary_output = args.json_output.with_suffix(args.json_output.suffix + ".tmp")
+            temporary_output.write_text(
+                json.dumps(
+                    {
+                        "question_ids": [case["question_id"] for case in cases],
+                        "offset": args.offset,
+                        "limit": args.limit,
+                        "indexed_sessions": store.table.count_rows(),
+                        "k": args.k,
+                        "results": results,
+                    }
+                ),
+                encoding="utf-8",
+            )
+            temporary_output.replace(args.json_output)
 
 
 if __name__ == "__main__":
