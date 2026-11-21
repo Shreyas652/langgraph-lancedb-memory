@@ -20,6 +20,7 @@ def main() -> None:
     chat.add_argument("--user", required=True, help="Local user identifier")
     chat.add_argument("--db", type=Path, default=Path("data/memory.lance"))
     chat.add_argument("--embedder", choices=("fastembed", "hash"), default="fastembed")
+    chat.add_argument("--vector-weight", type=float, default=0.5)
     chat.add_argument("--offline", action="store_true", help="Require a cached FastEmbed model")
     chat.add_argument(
         "--demo", action="store_true", help="Use the deterministic offline demo model"
@@ -30,7 +31,7 @@ def main() -> None:
         embedder = HashEmbedder()
     else:
         embedder = FastEmbedEmbedder(local_files_only=args.offline)
-    store = MemoryStore(args.db, embedder)
+    store = MemoryStore(args.db, embedder, hybrid_vector_weight=args.vector_weight)
     graph = build_graph(store, llm)
     thread_id = f"{args.user}:{uuid4()}"
     config = {"configurable": {"thread_id": thread_id}}

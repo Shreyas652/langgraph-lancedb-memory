@@ -2,10 +2,11 @@
 
 from datetime import UTC, datetime, timedelta
 
+import pyarrow as pa
 import pytest
 
 from agent_memory.embedder import HashEmbedder
-from agent_memory.store import MemoryStore
+from agent_memory.store import MemoryStore, _WeightedRRFReranker
 
 
 @pytest.fixture
@@ -77,3 +78,14 @@ def test_input_validation_and_schema_mismatch(store, tmp_path):
 
     with pytest.raises(ValueError, match="incompatible"):
         MemoryStore(tmp_path / "memory.lance", SmallEmbedder())
+    with pytest.raises(ValueError, match="hybrid_vector_weight"):
+        MemoryStore(tmp_path / "memory.lance", HashEmbedder(), hybrid_vector_weight=float("nan"))
+
+
+def test_weighted_fusion_changes_rank_when_search_legs_disagree():
+    vector = pa.table({"id": ["A", "B"], "_rowid": [1, 2], "_distance": [0.1, 0.2]})
+    lexical = pa.table({"id": ["B", "A"], "_rowid": [2, 1], "_score": [5.0, 1.0]})
+    vector_first = _WeightedRRFReranker(0.9).rerank_hybrid("query", vector, lexical)
+    lexical_first = _WeightedRRFReranker(0.1).rerank_hybrid("query", vector, lexical)
+    assert vector_first["id"].to_pylist() == ["A", "B"]
+    assert lexical_first["id"].to_pylist() == ["B", "A"]

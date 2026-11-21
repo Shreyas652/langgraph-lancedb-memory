@@ -108,6 +108,7 @@ def evaluate(
     *,
     dataset: Path = DATASET,
     limit: int | None = None,
+    hybrid_vector_weight: float = 0.5,
 ) -> dict[tuple[str, str], Score]:
     """Seed an isolated store, run each query mode, and return measured scores."""
     memories, questions = load_dataset(dataset)
@@ -116,7 +117,11 @@ def evaluate(
             raise ValueError("limit must be positive")
         questions = questions[:limit]
     with TemporaryDirectory(prefix="agent-memory-eval-") as temporary:
-        store = MemoryStore(Path(temporary) / "memory.lance", embedder)
+        store = MemoryStore(
+            Path(temporary) / "memory.lance",
+            embedder,
+            hybrid_vector_weight=hybrid_vector_weight,
+        )
         ids: dict[str, str] = {}
         for memory in sorted(memories, key=lambda row: (row["created_at"], row["id"])):
             ids[memory["id"]] = store.add(
@@ -185,6 +190,7 @@ def main() -> None:
     parser.add_argument("--embedder", choices=("fastembed", "hash"), default="fastembed")
     parser.add_argument("--offline", action="store_true", help="Require the cached BGE model")
     parser.add_argument("--limit", type=int, help="Evaluate only the first N questions")
+    parser.add_argument("--vector-weight", type=float, default=0.5)
     parser.add_argument("--output", type=Path, default=RESULTS)
     args = parser.parse_args()
     embedder = (
@@ -192,7 +198,7 @@ def main() -> None:
         if args.embedder == "fastembed"
         else HashEmbedder()
     )
-    scores = evaluate(embedder, limit=args.limit)
+    scores = evaluate(embedder, limit=args.limit, hybrid_vector_weight=args.vector_weight)
     table = format_table(scores)
     print(table)
     if args.limit is None:
@@ -210,7 +216,8 @@ def main() -> None:
             "MRR uses the first gold rank. Stale rate is measured only on updated questions "
             "and means a superseded memory appeared ahead of the current answer in the top five. "
             "Leak rate means any returned memory belonged to a different user. "
-            "Latency includes embedding and local search; it varies by machine.\n\n" + table + "\n"
+            "Latency includes embedding and local search; it varies by machine. "
+            f"Hybrid vector weight: {args.vector_weight:.2f}.\n\n" + table + "\n"
         )
         args.output.write_text(report, encoding="utf-8")
         print(f"\nWrote {args.output}")
