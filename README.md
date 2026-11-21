@@ -44,6 +44,8 @@ For optional live chat, run `uv sync --locked --extra openai` or `uv sync --lock
 
 The hand-written synthetic dataset has 54 memories for three users across four sessions each and 45 labeled questions. These results were measured locally on Windows with FastEmbed BGE. Recall@k counts a question when a gold memory appears in the first k results; MRR uses its first rank. Stale rate applies only to updated questions and counts a superseded memory ranked above the current answer in the top five. Leak rate counts any result from another user. Median latency includes local embedding and search and will vary by machine. The full question-type table is in [evals/results.md](evals/results.md).
 
+An exploratory weighted-fusion sweep and a 50-question pilot on the official LongMemEval evidence labels are documented in [evals/weighted_results.md](evals/weighted_results.md). The two datasets favored different weights, so the default remains equal-weight RRF pending full benchmark validation.
+
 | Mode | N | Recall@1 | Recall@3 | Recall@5 | MRR | Stale rate | Leak rate | Median ms |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | recency | 45 | 6.7% | 20.0% | 33.3% | 0.152 | 0.0% | 0.0% | 12.7 |

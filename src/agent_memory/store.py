@@ -1,5 +1,7 @@
 """Embedded LanceDB store with per-user search and topic supersession."""
 
+import math
+from collections import defaultdict
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -34,25 +36,48 @@ class Memory:
         return cls(**{field: row[field] for field in cls.__dataclass_fields__})
 
 
-class _StableRRFReranker(RRFReranker):
-    """Use stable ID ties in each leg and after RRF fusion."""
+class _WeightedRRFReranker(RRFReranker):
+    """Fuse stable candidate ranks with an explicit vector/lexical balance."""
+
+    def __init__(self, vector_weight: float) -> None:
+        if not math.isfinite(vector_weight) or not 0 <= vector_weight <= 1:
+            raise ValueError("hybrid_vector_weight must be between 0 and 1")
+        super().__init__()
+        self.vector_weight = vector_weight
 
     def rerank_hybrid(self, query, vector_results, fts_results):
+        del query
         if vector_results.num_rows:
             vector_results = vector_results.sort_by(
                 [("_distance", "ascending"), ("id", "ascending")]
             )
         if fts_results.num_rows:
             fts_results = fts_results.sort_by([("_score", "descending"), ("id", "ascending")])
-        fused = super().rerank_hybrid(query, vector_results, fts_results)
+        scores: defaultdict[int, float] = defaultdict(float)
+        for results, weight in (
+            (vector_results, self.vector_weight),
+            (fts_results, 1 - self.vector_weight),
+        ):
+            for rank, row_id in enumerate(results["_rowid"].to_pylist(), 1):
+                scores[row_id] += weight / (self.K + rank)
+        fused = self.merge_results(vector_results, fts_results)
+        fused = fused.append_column(
+            "_relevance_score",
+            pa.array([scores[row_id] for row_id in fused["_rowid"].to_pylist()], type=pa.float32()),
+        )
         return fused.sort_by([("_relevance_score", "descending"), ("id", "ascending")])
 
 
 class MemoryStore:
     """One local LanceDB table. Each read and mutation uses a typed user filter."""
 
-    def __init__(self, uri: str | Path, embedder: Embedder) -> None:
+    def __init__(
+        self, uri: str | Path, embedder: Embedder, *, hybrid_vector_weight: float = 0.5
+    ) -> None:
+        if not math.isfinite(hybrid_vector_weight) or not 0 <= hybrid_vector_weight <= 1:
+            raise ValueError("hybrid_vector_weight must be between 0 and 1")
         self.embedder = embedder
+        self.hybrid_vector_weight = hybrid_vector_weight
         self.db = lancedb.connect(str(uri))
         schema = pa.schema(
             [
@@ -180,7 +205,7 @@ class MemoryStore:
                 .vector(vector)
                 .text(query)
                 .where(predicate, prefilter=True)
-                .rerank(_StableRRFReranker())
+                .rerank(_WeightedRRFReranker(self.hybrid_vector_weight))
             )
         else:
             raise ValueError(f"Unknown search mode: {mode}")
