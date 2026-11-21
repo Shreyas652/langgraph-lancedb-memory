@@ -3,22 +3,24 @@
 ## Headline result
 
 On all **500 LongMemEval-S cleaned questions**, retrieved session memory raised
-Claude-judged answer accuracy from **26/500 (5.2%)** without memory to
-**333/500 (66.6%)** with memory. Claude Haiku 4.5 answered both arms and
-Claude Sonnet 4.6 graded them. The [evaluation report](evals/quality_and_scale.md)
-includes the protocol, per-question verdicts, and reproducibility checks.
+answer accuracy from **31/500 (6.2%)** without memory to **351/500 (70.2%)**
+with memory, using the benchmark's published `gpt-4o-2024-08-06` evaluator.
+Claude Haiku 4.5 generated both sets of answers. The separate Claude Sonnet
+4.6 grading run scored the same answers at 26/500 (5.2%) and 333/500 (66.6%).
+The [evaluation report](evals/quality_and_scale.md) includes the protocol,
+per-question labels, and reproducibility checks.
 
 | Question type | Questions | Without memory | With memory |
 | --- | ---: | ---: | ---: |
-| Knowledge update | 78 | 6 (7.7%) | 56 (71.8%) |
-| Multi-session | 133 | 10 (7.5%) | 76 (57.1%) |
+| Knowledge update | 78 | 6 (7.7%) | 61 (78.2%) |
+| Multi-session | 133 | 12 (9.0%) | 82 (61.7%) |
 | Single-session assistant | 56 | 0 (0%) | 56 (100%) |
-| Single-session preference | 30 | 0 (0%) | 14 (46.7%) |
-| Single-session user | 70 | 6 (8.6%) | 63 (90.0%) |
-| Temporal reasoning | 133 | 4 (3.0%) | 68 (51.1%) |
+| Single-session preference | 30 | 0 (0%) | 13 (43.3%) |
+| Single-session user | 70 | 7 (10.0%) | 63 (90.0%) |
+| Temporal reasoning | 133 | 6 (4.5%) | 76 (57.1%) |
 
-**Caveat:** Claude graded these answers, not the benchmark's official GPT-4o
-grader; the run stored whole sessions and did not test the fact extractor.
+**Caveat:** This uses the official evaluator, but is not a leaderboard
+submission. The run stored whole sessions and did not test the fact extractor.
 
 Agents need durable facts across conversations, and a chat thread alone cannot
 provide them. This example stores user-scoped memories in embedded LanceDB,
@@ -97,6 +99,10 @@ Vector search performed best overall on this small dataset. RRF hybrid ranked ex
 ## Limits and next steps
 
 This is a local single-process example, not an authenticated multi-tenant service. The store has no transactional guarantee for concurrent writers, and the in-memory checkpointer disappears on restart. The offline extractor recognizes only a few explicit English phrases; the optional structured LLM extractor still needs validation on real consented data. Useful next steps are a persistent checkpoint store, concurrency control for topic updates, and tested memory decay or summarization. The synthetic labels and local scale timing do not establish production accuracy or latency.
+
+The LongMemEval answer run indexed complete conversations as memory rows. A
+separate benchmark should measure the agent's fact extraction and update path
+before claiming end-to-end memory quality.
 
 ## Development
 

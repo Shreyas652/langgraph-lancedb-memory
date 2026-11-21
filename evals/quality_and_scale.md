@@ -25,7 +25,58 @@ judgments can be wrong; inspect a sample of disagreements before using this
 to make product decisions. The context budget is explicit and complete
 sessions that do not fit are skipped, not silently truncated.
 
-## Full 500-question answer result
+## Published GPT-4o evaluator on the same 500 answers
+
+The saved answers from the run below were graded again with LongMemEval's
+**unmodified** [`evaluate_qa.py`](https://github.com/xiaowu0162/LongMemEval/blob/9e0b455f4ef0e2ab8f2e582289761153549043fc/src/evaluation/evaluate_qa.py)
+at commit `9e0b455f4ef0e2ab8f2e582289761153549043fc`. Its `gpt-4o` option
+selects `gpt-4o-2024-08-06`, temperature zero, and the benchmark's
+task-specific grading prompts. The 500 baseline and 500 memory hypotheses
+were split into 25-question chunks for resumability; no answer was regenerated
+or changed. The official [`print_qa_metrics.py`](https://github.com/xiaowu0162/LongMemEval/blob/9e0b455f4ef0e2ab8f2e582289761153549043fc/src/evaluation/print_qa_metrics.py)
+independently reproduced both overall and task-averaged scores from the
+combined evaluator outputs.
+The evaluator ran in an isolated Python 3.10.11 environment with the
+benchmark's `requirements-lite.txt` (`openai==1.35.1`, `numpy==1.26.3`)
+and `httpx==0.27.2` for compatibility with that OpenAI client. The local
+[PowerShell runner](run_official_gpt4o.ps1) loads an ignored, user-encrypted
+API key and runs the unchanged evaluator on every prepared chunk.
+
+| Measure | Without memory | With retrieved memory |
+| --- | ---: | ---: |
+| Overall accuracy | 31 / 500 (6.2%) | 351 / 500 (70.2%) |
+| Task-averaged accuracy | 5.2% | 71.7% |
+| Abstention accuracy | 30 / 30 (100%) | 30 / 30 (100%) |
+
+The memory arm alone was correct on 320 questions, the baseline alone on zero;
+both were correct on 31 and both were wrong on 149. The 64.0 percentage-point
+overall gap measures these saved Haiku 4.5 answers under the published GPT-4o
+evaluator. It is **not a leaderboard submission**, a production accuracy
+estimate, or evidence that the agent's fact extractor works: this experiment
+stored whole history sessions as memory rows.
+
+| LongMemEval question type | N | Without memory | With memory |
+| --- | ---: | ---: | ---: |
+| Knowledge update | 78 | 6 (7.7%) | 61 (78.2%) |
+| Multi-session | 133 | 12 (9.0%) | 82 (61.7%) |
+| Single-session assistant | 56 | 0 (0%) | 56 (100%) |
+| Single-session preference | 30 | 0 (0%) | 13 (43.3%) |
+| Single-session user | 70 | 7 (10.0%) | 63 (90.0%) |
+| Temporal reasoning | 133 | 6 (4.5%) | 76 (57.1%) |
+
+The [summary](longmemeval_official_gpt4o_summary.json),
+[manifest with source and input hashes](longmemeval_official_gpt4o_manifest.json),
+and [text-free per-question labels](longmemeval_official_gpt4o_labels.jsonl)
+are public. CI recomputes their counts and scores independently. Raw answers,
+prompts, and evaluator outputs remain in ignored local `data/`. The evaluator
+file SHA-256 is `5085eb9ae08b91c6c4f97c6bea9b8c2d6e55f9ec72c27734cafa0a04f00a430a`;
+the saved answers SHA-256 is `8e104deaadf494d56da96194d5e295f48879b34dd3b22fb9e5db4ab3c6071d70`.
+The [preparation and verification code](official_gpt4o.py) checks all 500 IDs,
+question types, reference answers, grader labels, and hashes before publishing
+aggregates. Automatic GPT-4o judgments can still be mistaken on individual
+questions.
+
+## Separate Claude-judged 500-question result
 
 The run completed all **500 LongMemEval-S cleaned questions**, including 30
 abstentions, on 21 November 2026. It indexed 23,867 full history sessions in
@@ -83,8 +134,9 @@ query parsing, concurrent writers, or real user satisfaction. The judge is
 not the benchmark's [published GPT-4o evaluator](https://github.com/xiaowu0162/LongMemEval/blob/main/src/evaluation/evaluate_qa.py),
 and automatic judgments may contain errors. A fixed sample of wins, losses,
 and misses was inspected, but the 500 judgments have not all been reviewed by
-humans. This is a reproducible Bedrock-judged public-dataset result, not an
-official leaderboard score.
+humans. This is a reproducible separate Bedrock-judged result. The GPT-4o
+evaluation above uses the same saved answers and the benchmark's published
+evaluator.
 
 ## Fact updates and time
 

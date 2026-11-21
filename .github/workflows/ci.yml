@@ -27,6 +27,8 @@ jobs:
         run: uv run --offline pytest -q
       - name: Verify published answer evidence
         run: uv run --offline python -m evals.verify_answer_evidence
+      - name: Verify published GPT-4o evaluator results
+        run: uv run --offline python -m evals.verify_official_gpt4o
       - name: Lint
         run: uv run --offline ruff check .
       - name: Format
