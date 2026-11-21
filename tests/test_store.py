@@ -50,6 +50,21 @@ def test_historical_insert_does_not_replace_newer_memory(store):
     assert [memory.id for memory in store.search("alice", "city", mode="recency")] == [active]
 
 
+def test_duplicate_id_cannot_replace_another_users_memory(store):
+    existing = store.add("bob", "Prefers coffee", "preference", "drink")
+    old = store.add("alice", "Lives in Austin", "fact", "home_city")
+    with pytest.raises(ValueError, match="memory_id already exists"):
+        store.add(
+            "alice",
+            "Lives in Denver",
+            "fact",
+            "home_city",
+            memory_id=existing,
+        )
+    assert [memory.id for memory in store.search("alice", "city", mode="recency")] == [old]
+    assert [memory.id for memory in store.search("bob", "coffee", mode="recency")] == [existing]
+
+
 def test_input_validation_and_schema_mismatch(store, tmp_path):
     with pytest.raises(ValueError, match="nonempty"):
         store.add("", "A fact", "fact", "topic")
