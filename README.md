@@ -25,10 +25,10 @@ Install [uv](https://docs.astral.sh/uv/getting-started/installation/) and Python
 ```sh
 uv sync --locked
 uv run python evals/run_eval.py
-uv run python -m agent_memory.cli chat --user alice
+uv run python -m agent_memory.cli chat --user alice --demo
 ```
 
-The first evaluation or chat launch downloads the public `BAAI/bge-small-en-v1.5` ONNX model into `data/models/`. No API key is needed. The evaluation prints its table and writes `evals/results.md`. In chat, try `I live in Denver.`, then `Where do I live?`; enter `/quit` to exit. Reopen chat with the same user to see long-term recall in a new thread.
+The first evaluation or chat launch downloads the public `BAAI/bge-small-en-v1.5` ONNX model into `data/models/`. No API key is needed for retrieval or the explicit `--demo` chat mode. The evaluation prints its table and writes `evals/results.md`. In chat, try `I live in Denver.`, then `Where do I live?`; enter `/quit` to exit. Reopen chat with the same user to see long-term recall in a new thread.
 
 After dependencies and the model are cached, the full evaluation runs without network access:
 
@@ -38,7 +38,7 @@ uv run --offline python evals/run_eval.py --offline
 
 The tests need no model download: `uv run --offline pytest -q` works after `uv sync --locked`. For a network-free runtime demo without BGE, add `--embedder hash` to the evaluation or chat command. Hash vectors are deterministic token features, not a semantic substitute for BGE. A literal clean clone with no package or model cache needs a one-time download; the repository does not vendor either.
 
-For optional live chat, run `uv sync --locked --extra openai` or `uv sync --locked --extra anthropic`. Set exactly one provider key (`OPENAI_API_KEY` or `ANTHROPIC_API_KEY`) and its model name (`OPENAI_MODEL` or `ANTHROPIC_MODEL`). With no provider key, the deterministic `FakeLLM` echoes recalled memories and extracts a few explicit patterns. It is a demo, not a general answer model.
+For live chat, run `uv sync --locked --extra openai` or `uv sync --locked --extra anthropic`. Set exactly one provider key (`OPENAI_API_KEY` or `ANTHROPIC_API_KEY`) and its model name (`OPENAI_MODEL` or `ANTHROPIC_MODEL`), then run chat without `--demo`. Without a provider key, normal chat fails clearly instead of silently using a fake model. The explicit demo echoes recalled memories and extracts a few fixed patterns; it is not a general answer model.
 
 ## Measured retrieval
 
@@ -58,7 +58,7 @@ Vector search performed best overall on this small dataset. RRF hybrid ranked ex
 ## Design
 
 - Every search applies a typed `user_id` expression before ranking. Delete and supersession mutations also use typed expressions, so a quoted user ID is treated as data.
-- A new memory on a user's topic marks the older one superseded rather than deleting it. Normal retrieval excludes history; `include_superseded=True` exists for audit and the stale-result comparison. An older backfilled timestamp stays historical.
+- A new memory on a user's topic marks the older one superseded rather than deleting it. LanceDB merge-insert commits the old-row update and new row in one transaction, so a failed write does not remove the active fact. Normal retrieval excludes history; `include_superseded=True` exists for audit and the stale-result comparison. An older backfilled timestamp stays historical.
 - Hybrid search combines vector and full-text candidates with reciprocal rank fusion (RRF). IDs break ranking ties so retrieval scores are reproducible; latency remains machine-dependent. No vector ANN index is created for this small dataset.
 - Evaluation uses isolated temporary LanceDB storage and stable seeded IDs. It never reads or changes the chat database at `data/memory.lance`.
 

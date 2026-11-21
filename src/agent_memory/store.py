@@ -134,22 +134,26 @@ class MemoryStore:
         )
         active = self.table.search().where(active_filter).to_list()
         is_historical = any(row["created_at"] > timestamp for row in active)
-        if active and not is_historical:
-            self.table.update(where=active_filter, values={"superseded": True})
         memory_id = memory_id or str(uuid4())
-        self.table.add(
-            [
-                {
-                    "id": memory_id,
-                    "user_id": user_id,
-                    "text": text,
-                    "kind": kind,
-                    "topic": topic,
-                    "created_at": timestamp,
-                    "superseded": is_historical,
-                    "vector": vector,
-                }
-            ]
+        if self.table.search().where(col("id") == memory_id).limit(1).to_list():
+            raise ValueError("memory_id already exists")
+        new_row = {
+            "id": memory_id,
+            "user_id": user_id,
+            "text": text,
+            "kind": kind,
+            "topic": topic,
+            "created_at": timestamp,
+            "superseded": is_historical,
+            "vector": vector,
+        }
+        # A merge commits the old-row updates and new row together. A failed
+        # write therefore leaves the previously active memory available.
+        rows = [dict(row, superseded=True) for row in active] if not is_historical else []
+        rows.append(new_row)
+        merge = self.table.merge_insert("id").when_matched_update_all()
+        merge.when_not_matched_insert_all().execute(
+            pa.Table.from_pylist(rows, schema=self.table.schema)
         )
         self._fts_dirty = True
         return memory_id
