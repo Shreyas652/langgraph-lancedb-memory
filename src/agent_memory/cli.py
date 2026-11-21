@@ -1,6 +1,8 @@
 """Local chat entry point: python -m agent_memory.cli chat --user alice."""
 
 import argparse
+import json
+from datetime import datetime
 from pathlib import Path
 from uuid import uuid4
 
@@ -25,7 +27,32 @@ def main() -> None:
     chat.add_argument(
         "--demo", action="store_true", help="Use the deterministic offline demo model"
     )
+    compare = subcommands.add_parser("compare", help="Compare a fact at two explicit times")
+    compare.add_argument("--user", required=True)
+    compare.add_argument("--topic", required=True)
+    compare.add_argument("--before", required=True, help="ISO 8601 timestamp with timezone")
+    compare.add_argument("--after", required=True, help="ISO 8601 timestamp with timezone")
+    compare.add_argument("--db", type=Path, default=Path("data/memory.lance"))
     args = parser.parse_args()
+    if args.command == "compare":
+        # This read-only lookup does not compute embeddings; the hash embedder
+        # supplies the same table dimension without downloading a model.
+        store = MemoryStore(args.db, HashEmbedder())
+        earlier, later = store.compare_topic(
+            args.user,
+            args.topic,
+            datetime.fromisoformat(args.before),
+            datetime.fromisoformat(args.after),
+        )
+        print(
+            json.dumps(
+                {
+                    "before": None if earlier is None else earlier.text,
+                    "after": None if later is None else later.text,
+                }
+            )
+        )
+        return
     llm = create_llm(demo=args.demo)
     if args.embedder == "hash":
         embedder = HashEmbedder()

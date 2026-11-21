@@ -46,6 +46,12 @@ The hand-written synthetic dataset has 54 memories for three users across four s
 
 The weighted-fusion sweep and a full 470-question LongMemEval-S cleaned evidence-retrieval run are documented in [evals/weighted_results.md](evals/weighted_results.md). Equal-weight hybrid led the public-data run, so the default remains 0.5. These are retrieval results, not answer-accuracy scores.
 
+The [memory quality and scale report](evals/quality_and_scale.md) documents the
+paired Bedrock answer evaluation protocol, explicit temporal fact comparison,
+and measured 100,000-row exact-versus-indexed search results. The answer
+runner's judge is separate from the reader and is not the benchmark's official
+GPT-4o judge.
+
 | Mode | N | Recall@1 | Recall@3 | Recall@5 | MRR | Stale rate | Leak rate | Median ms |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | recency | 45 | 6.7% | 20.0% | 33.3% | 0.152 | 0.0% | 0.0% | 12.7 |
@@ -59,12 +65,13 @@ Vector search performed best overall on this small dataset. RRF hybrid ranked ex
 
 - Every search applies a typed `user_id` expression before ranking. Delete and supersession mutations also use typed expressions, so a quoted user ID is treated as data.
 - A new memory on a user's topic marks the older one superseded rather than deleting it. LanceDB merge-insert commits the old-row update and new row in one transaction, so a failed write does not remove the active fact. Normal retrieval excludes history; `include_superseded=True` exists for audit and the stale-result comparison. An older backfilled timestamp stays historical.
+- Repeated identical active facts return the same memory ID. Explicit `get_topic_at` and `compare_topic` lookups answer before/after queries from timezone-aware timestamps; the CLI exposes the comparison with `agent-memory compare`.
 - Hybrid search combines vector and full-text candidates with reciprocal rank fusion (RRF). IDs break ranking ties so retrieval scores are reproducible; latency remains machine-dependent. No vector ANN index is created for this small dataset.
 - Evaluation uses isolated temporary LanceDB storage and stable seeded IDs. It never reads or changes the chat database at `data/memory.lance`.
 
 ## Limits and next steps
 
-This is a local single-process example, not an authenticated multi-tenant service. The store has no transactional guarantee for concurrent writers, and the in-memory checkpointer disappears on restart. The offline extractor recognizes only a few explicit English phrases; the optional structured LLM extractor still needs validation on real consented data. Useful next steps are a persistent checkpoint store, concurrency control for topic updates, tested memory decay or summarization, and a scale study with 100,000+ memories. The synthetic labels and one local timing run do not establish production accuracy or latency.
+This is a local single-process example, not an authenticated multi-tenant service. The store has no transactional guarantee for concurrent writers, and the in-memory checkpointer disappears on restart. The offline extractor recognizes only a few explicit English phrases; the optional structured LLM extractor still needs validation on real consented data. Useful next steps are a persistent checkpoint store, concurrency control for topic updates, and tested memory decay or summarization. The synthetic labels and local scale timing do not establish production accuracy or latency.
 
 ## Development
 

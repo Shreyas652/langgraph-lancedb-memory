@@ -14,13 +14,18 @@ dependencies = [
   "fastembed==0.9.1",
   "lancedb==0.41.0",
   "langgraph==1.2.24",
+  "numpy>=1.26,<3",
   "pyarrow==26.0.1",
   "pydantic==2.14.4",
+  "tzdata==2026.6",
 ]
 
 [project.optional-dependencies]
 openai = ["langchain-openai==1.8.5"]
 anthropic = ["langchain-anthropic==1.7.11"]
+bedrock = [
+    "boto3>=1.40,<2",
+]
 
 [dependency-groups]
 dev = ["pytest==9.2.0", "ruff==0.17.6"]

@@ -125,18 +125,43 @@ class MemoryStore:
         if timestamp.tzinfo is None or timestamp.utcoffset() is None:
             raise ValueError("created_at must include a timezone")
         timestamp = timestamp.astimezone(UTC)
-        vector = self.embedder.embed_documents([text])[0]
-        if len(vector) != self.embedder.dimension:
-            raise ValueError("Embedder returned the wrong vector dimension")
-
         active_filter = (
             (col("user_id") == user_id) & (col("topic") == topic) & (col("superseded") == False)  # noqa: E712
         )
         active = self.table.search().where(active_filter).to_list()
+        if len(active) > 1:
+            raise ValueError("Multiple active memories exist for one user and topic")
+        same_time = (
+            self.table.search()
+            .where(
+                (col("user_id") == user_id)
+                & (col("topic") == topic)
+                & (col("created_at") == timestamp)
+            )
+            .to_list()
+        )
         is_historical = any(row["created_at"] > timestamp for row in active)
+        supplied_id = memory_id is not None
         memory_id = memory_id or str(uuid4())
         if self.table.search().where(col("id") == memory_id).limit(1).to_list():
             raise ValueError("memory_id already exists")
+        if same_time:
+            if len(same_time) > 1 or any(
+                row["text"] != text or row["kind"] != kind for row in same_time
+            ):
+                raise ValueError("Conflicting facts have the same timestamp")
+            if not supplied_id:
+                return same_time[0]["id"]
+        if (
+            not supplied_id
+            and active
+            and not is_historical
+            and (active[0]["text"] == text and active[0]["kind"] == kind)
+        ):
+            return active[0]["id"]
+        vector = self.embedder.embed_documents([text])[0]
+        if len(vector) != self.embedder.dimension:
+            raise ValueError("Embedder returned the wrong vector dimension")
         new_row = {
             "id": memory_id,
             "user_id": user_id,
@@ -157,6 +182,41 @@ class MemoryStore:
         )
         self._fts_dirty = True
         return memory_id
+
+    def get_topic_at(self, user_id: str, topic: str, at: datetime) -> Memory | None:
+        """Return the fact effective at an explicit UTC-normalized point in time."""
+        if not user_id.strip() or not topic.strip():
+            raise ValueError("user_id and topic must be nonempty")
+        if at.tzinfo is None or at.utcoffset() is None:
+            raise ValueError("at must include a timezone")
+        predicate = (
+            (col("user_id") == user_id)
+            & (col("topic") == topic)
+            & (col("created_at") <= at.astimezone(UTC))
+        )
+        rows = (
+            self.table.search()
+            .where(predicate)
+            .order_by([ColumnOrdering(column_name="created_at", ascending=False)])
+            .limit(1)
+            .to_list()
+        )
+        return Memory.from_row(rows[0]) if rows else None
+
+    def compare_topic(
+        self, user_id: str, topic: str, before: datetime, after: datetime
+    ) -> tuple[Memory | None, Memory | None]:
+        """Provide both states for a caller's before/after question."""
+        if before.tzinfo is None or before.utcoffset() is None:
+            raise ValueError("before must include a timezone")
+        if after.tzinfo is None or after.utcoffset() is None:
+            raise ValueError("after must include a timezone")
+        if before.astimezone(UTC) >= after.astimezone(UTC):
+            raise ValueError("before must precede after")
+        return (
+            self.get_topic_at(user_id, topic, before),
+            self.get_topic_at(user_id, topic, after),
+        )
 
     def create_indexes(self) -> None:
         """Build exact-search FTS and a user filter index; no vector ANN index."""
