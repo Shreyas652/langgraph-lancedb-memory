@@ -1,0 +1,82 @@
+{
+  "grader_model": "gpt-4o-2024-08-06",
+  "questions": 500,
+  "arms": {
+    "baseline": {
+      "correct": 31,
+      "overall_accuracy": 0.062,
+      "task_averaged_accuracy": 0.0520435704646231,
+      "abstention": {
+        "correct": 30,
+        "total": 30
+      },
+      "by_type": {
+        "knowledge-update": {
+          "correct": 6,
+          "total": 78
+        },
+        "multi-session": {
+          "correct": 12,
+          "total": 133
+        },
+        "single-session-assistant": {
+          "correct": 0,
+          "total": 56
+        },
+        "single-session-preference": {
+          "correct": 0,
+          "total": 30
+        },
+        "single-session-user": {
+          "correct": 7,
+          "total": 70
+        },
+        "temporal-reasoning": {
+          "correct": 6,
+          "total": 133
+        }
+      }
+    },
+    "memory": {
+      "correct": 351,
+      "overall_accuracy": 0.702,
+      "task_averaged_accuracy": 0.7172257566994409,
+      "abstention": {
+        "correct": 30,
+        "total": 30
+      },
+      "by_type": {
+        "knowledge-update": {
+          "correct": 61,
+          "total": 78
+        },
+        "multi-session": {
+          "correct": 82,
+          "total": 133
+        },
+        "single-session-assistant": {
+          "correct": 56,
+          "total": 56
+        },
+        "single-session-preference": {
+          "correct": 13,
+          "total": 30
+        },
+        "single-session-user": {
+          "correct": 63,
+          "total": 70
+        },
+        "temporal-reasoning": {
+          "correct": 76,
+          "total": 133
+        }
+      }
+    }
+  },
+  "paired": {
+    "memory_only_correct": 320,
+    "baseline_only_correct": 0,
+    "both_correct": 31,
+    "both_wrong": 149
+  }
+}
