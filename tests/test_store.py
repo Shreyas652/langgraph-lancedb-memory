@@ -1,10 +1,13 @@
 """Real embedded LanceDB tests; the deterministic embedder needs no model download."""
 
+import json
+import sys
 from datetime import UTC, datetime, timedelta
 
 import pyarrow as pa
 import pytest
 
+from agent_memory.cli import main
 from agent_memory.embedder import HashEmbedder
 from agent_memory.store import MemoryStore, _WeightedRRFReranker
 
@@ -48,6 +51,70 @@ def test_historical_insert_does_not_replace_newer_memory(store):
     active = store.add("alice", "Lives in Denver", "fact", "home_city", newer)
     store.add("alice", "Lived in Austin", "fact", "home_city", newer - timedelta(days=1))
     assert [memory.id for memory in store.search("alice", "city", mode="recency")] == [active]
+
+
+def test_duplicate_fact_is_merged_and_timeline_answers_before_after(store):
+    first = datetime(2026, 1, 1, tzinfo=UTC)
+    second = first + timedelta(days=10)
+    austin = store.add("alice", "Lives in Austin", "fact", "home_city", first)
+    assert store.add("alice", "Lives in Austin", "fact", "home_city", first) == austin
+    assert (
+        store.add("alice", "Lives in Austin", "fact", "home_city", first + timedelta(days=1))
+        == austin
+    )
+    denver = store.add("alice", "Lives in Denver", "fact", "home_city", second)
+    assert store.add("alice", "Lives in Denver", "fact", "home_city", second) == denver
+    assert store.table.count_rows() == 2
+    before, after = store.compare_topic(
+        "alice", "home_city", first + timedelta(days=1), second + timedelta(days=1)
+    )
+    assert (before.id, after.id) == (austin, denver)
+    assert store.get_topic_at("alice", "home_city", first - timedelta(days=1)) is None
+    assert store.get_topic_at("bob", "home_city", second + timedelta(days=1)) is None
+
+
+def test_temporal_backfill_and_conflicting_timestamp(store):
+    first = datetime(2026, 1, 1, tzinfo=UTC)
+    third = first + timedelta(days=20)
+    store.add("alice", "Lives in Denver", "fact", "home_city", third)
+    austin = store.add("alice", "Lives in Austin", "fact", "home_city", first)
+    assert store.add("alice", "Lives in Austin", "fact", "home_city", first) == austin
+    assert store.get_topic_at("alice", "home_city", first + timedelta(days=1)).id == austin
+    with pytest.raises(ValueError, match="same timestamp"):
+        store.add("alice", "Lives in Phoenix", "fact", "home_city", third)
+    with pytest.raises(ValueError, match="same timestamp"):
+        store.add("alice", "Lives in Phoenix", "fact", "home_city", first)
+    with pytest.raises(ValueError, match="timezone"):
+        store.get_topic_at("alice", "home_city", datetime(2026, 1, 1))
+    with pytest.raises(ValueError, match="before must precede after"):
+        store.compare_topic("alice", "home_city", third, first)
+
+
+def test_compare_cli_returns_before_and_after_without_model(tmp_path, monkeypatch, capsys):
+    path = tmp_path / "memory.lance"
+    store = MemoryStore(path, HashEmbedder())
+    store.add("alice", "Austin", "fact", "home_city", datetime(2026, 1, 1, tzinfo=UTC))
+    store.add("alice", "Denver", "fact", "home_city", datetime(2026, 2, 1, tzinfo=UTC))
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "agent-memory",
+            "compare",
+            "--user",
+            "alice",
+            "--topic",
+            "home_city",
+            "--before",
+            "2026-01-15T00:00:00+00:00",
+            "--after",
+            "2026-02-15T00:00:00+00:00",
+            "--db",
+            str(path),
+        ],
+    )
+    main()
+    assert json.loads(capsys.readouterr().out) == {"before": "Austin", "after": "Denver"}
 
 
 def test_duplicate_id_cannot_replace_another_users_memory(store):

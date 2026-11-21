@@ -1,0 +1,21 @@
+{
+  "status": "COMPLETE",
+  "rows": 100000,
+  "dimension": 384,
+  "queries": 100,
+  "seed": 20261121,
+  "index": "IVF_FLAT",
+  "partitions": 256,
+  "nprobes": 128,
+  "ingest_seconds": 6.386910900000657,
+  "index_build_seconds": 4.173567300000286,
+  "bytes_on_disk": 314938899,
+  "exact_before_p50_ms": 81.56655000038882,
+  "exact_before_p95_ms": 126.76582500052973,
+  "exact_after_p50_ms": 76.54309999998077,
+  "exact_after_p95_ms": 123.66278999970746,
+  "indexed_p50_ms": 24.389650000557594,
+  "indexed_p95_ms": 37.27552999980617,
+  "indexed_recall_at_10": 0.768,
+  "indexed_top_1_agreement": 1.0
+}

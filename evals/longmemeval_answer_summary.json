@@ -1,0 +1,59 @@
+{
+  "status": "COMPLETE",
+  "question_count": 500,
+  "baseline_accuracy": 0.052,
+  "memory_accuracy": 0.666,
+  "paired_memory_only_wins": 309,
+  "paired_baseline_only_wins": 2,
+  "strict_all_evidence_at_k": 0.8808510638297873,
+  "any_evidence_at_k": 0.9723404255319149,
+  "strict_all_evidence_at_context": 0.8680851063829788,
+  "any_evidence_at_context": 0.9723404255319149,
+  "by_type": {
+    "knowledge-update": {
+      "n": 78,
+      "baseline_accuracy": 0.07692307692307693,
+      "memory_accuracy": 0.717948717948718
+    },
+    "multi-session": {
+      "n": 133,
+      "baseline_accuracy": 0.07518796992481203,
+      "memory_accuracy": 0.5714285714285714
+    },
+    "single-session-assistant": {
+      "n": 56,
+      "baseline_accuracy": 0,
+      "memory_accuracy": 1
+    },
+    "single-session-preference": {
+      "n": 30,
+      "baseline_accuracy": 0,
+      "memory_accuracy": 0.4666666666666667
+    },
+    "single-session-user": {
+      "n": 70,
+      "baseline_accuracy": 0.08571428571428572,
+      "memory_accuracy": 0.9
+    },
+    "temporal-reasoning": {
+      "n": 133,
+      "baseline_accuracy": 0.03007518796992481,
+      "memory_accuracy": 0.5112781954887218
+    }
+  },
+  "token_usage": {
+    "baseline_reader_input": 42899,
+    "baseline_reader_output": 18733,
+    "memory_reader_input": 7697626,
+    "memory_reader_output": 50311,
+    "baseline_judge_input": 73341,
+    "baseline_judge_output": 2000,
+    "memory_judge_input": 104955,
+    "memory_judge_output": 2000
+  },
+  "dataset_sha256": "d6f21ea9d60a0d56f34a05b609c79c88a451d2ae03597821ea3d5a9678c3a442",
+  "reader_model": "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "judge_model": "us.anthropic.claude-sonnet-4-6",
+  "k": 5,
+  "max_context_chars": 80000
+}

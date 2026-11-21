@@ -1,6 +1,32 @@
 # LangGraph + LanceDB long-term memory
 
-Agents need durable facts across conversations, and a chat thread alone cannot provide them. This example stores user-scoped memories in embedded LanceDB, which provides local vector search, full-text search, and filters in one table without a database server. A LangGraph agent recalls relevant memories, answers, and saves newly stated facts. A labeled synthetic evaluation checks retrieval quality, stale results, and cross-user leakage.
+## Headline result
+
+On all **500 LongMemEval-S cleaned questions**, retrieved session memory raised
+Claude-judged answer accuracy from **26/500 (5.2%)** without memory to
+**333/500 (66.6%)** with memory. Claude Haiku 4.5 answered both arms and
+Claude Sonnet 4.6 graded them. The [evaluation report](evals/quality_and_scale.md)
+includes the protocol, per-question verdicts, and reproducibility checks.
+
+| Question type | Questions | Without memory | With memory |
+| --- | ---: | ---: | ---: |
+| Knowledge update | 78 | 6 (7.7%) | 56 (71.8%) |
+| Multi-session | 133 | 10 (7.5%) | 76 (57.1%) |
+| Single-session assistant | 56 | 0 (0%) | 56 (100%) |
+| Single-session preference | 30 | 0 (0%) | 14 (46.7%) |
+| Single-session user | 70 | 6 (8.6%) | 63 (90.0%) |
+| Temporal reasoning | 133 | 4 (3.0%) | 68 (51.1%) |
+
+**Caveat:** Claude graded these answers, not the benchmark's official GPT-4o
+grader; the run stored whole sessions and did not test the fact extractor.
+
+Agents need durable facts across conversations, and a chat thread alone cannot
+provide them. This example stores user-scoped memories in embedded LanceDB,
+which provides local vector search, full-text search, and filters in one table
+without a database server. A LangGraph agent recalls relevant memories,
+answers, and saves newly stated facts. Synthetic and public-dataset
+evaluations measure retrieval and answer quality, stale results, and
+cross-user leakage.
 
 ## Architecture
 
@@ -46,6 +72,11 @@ The hand-written synthetic dataset has 54 memories for three users across four s
 
 The weighted-fusion sweep and a full 470-question LongMemEval-S cleaned evidence-retrieval run are documented in [evals/weighted_results.md](evals/weighted_results.md). Equal-weight hybrid led the public-data run, so the default remains 0.5. These are retrieval results, not answer-accuracy scores.
 
+The [memory quality and scale report](evals/quality_and_scale.md) also covers
+explicit temporal fact comparison and 100,000-row exact-versus-indexed search
+tests on **local Windows and AWS**. The full-probe index matched exact top-10
+neighbors in both runs but was faster only on the local host.
+
 | Mode | N | Recall@1 | Recall@3 | Recall@5 | MRR | Stale rate | Leak rate | Median ms |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | recency | 45 | 6.7% | 20.0% | 33.3% | 0.152 | 0.0% | 0.0% | 12.7 |
@@ -59,12 +90,13 @@ Vector search performed best overall on this small dataset. RRF hybrid ranked ex
 
 - Every search applies a typed `user_id` expression before ranking. Delete and supersession mutations also use typed expressions, so a quoted user ID is treated as data.
 - A new memory on a user's topic marks the older one superseded rather than deleting it. LanceDB merge-insert commits the old-row update and new row in one transaction, so a failed write does not remove the active fact. Normal retrieval excludes history; `include_superseded=True` exists for audit and the stale-result comparison. An older backfilled timestamp stays historical.
+- Repeated identical active facts return the same memory ID. Explicit `get_topic_at` and `compare_topic` lookups answer before/after queries from timezone-aware timestamps; the CLI exposes the comparison with `agent-memory compare`.
 - Hybrid search combines vector and full-text candidates with reciprocal rank fusion (RRF). IDs break ranking ties so retrieval scores are reproducible; latency remains machine-dependent. No vector ANN index is created for this small dataset.
 - Evaluation uses isolated temporary LanceDB storage and stable seeded IDs. It never reads or changes the chat database at `data/memory.lance`.
 
 ## Limits and next steps
 
-This is a local single-process example, not an authenticated multi-tenant service. The store has no transactional guarantee for concurrent writers, and the in-memory checkpointer disappears on restart. The offline extractor recognizes only a few explicit English phrases; the optional structured LLM extractor still needs validation on real consented data. Useful next steps are a persistent checkpoint store, concurrency control for topic updates, tested memory decay or summarization, and a scale study with 100,000+ memories. The synthetic labels and one local timing run do not establish production accuracy or latency.
+This is a local single-process example, not an authenticated multi-tenant service. The store has no transactional guarantee for concurrent writers, and the in-memory checkpointer disappears on restart. The offline extractor recognizes only a few explicit English phrases; the optional structured LLM extractor still needs validation on real consented data. Useful next steps are a persistent checkpoint store, concurrency control for topic updates, and tested memory decay or summarization. The synthetic labels and local scale timing do not establish production accuracy or latency.
 
 ## Development
 
