@@ -1,6 +1,6 @@
 # LangGraph + LanceDB long-term memory
 
-Agents need durable facts across conversations, and a chat thread alone cannot provide them. This example stores user-scoped memories in embedded LanceDB, which provides local vector search, full-text search, and filters in one table without a database server. A LangGraph agent recalls relevant memories, answers, and saves newly stated facts. A labeled synthetic evaluation checks retrieval quality, stale results, and cross-user leakage.
+Agents need durable facts across conversations, and a chat thread alone cannot provide them. This example stores user-scoped memories in embedded LanceDB, which provides local vector search, full-text search, and filters in one table without a database server. A LangGraph agent recalls relevant memories, answers, and saves newly stated facts. Synthetic and public-dataset evaluations measure retrieval and answer quality, stale results, and cross-user leakage.
 
 ## Architecture
 
@@ -46,11 +46,13 @@ The hand-written synthetic dataset has 54 memories for three users across four s
 
 The weighted-fusion sweep and a full 470-question LongMemEval-S cleaned evidence-retrieval run are documented in [evals/weighted_results.md](evals/weighted_results.md). Equal-weight hybrid led the public-data run, so the default remains 0.5. These are retrieval results, not answer-accuracy scores.
 
-The [memory quality and scale report](evals/quality_and_scale.md) documents the
-paired Bedrock answer evaluation protocol, explicit temporal fact comparison,
-and measured 100,000-row exact-versus-indexed search results. The answer
-runner's judge is separate from the reader and is not the benchmark's official
-GPT-4o judge.
+The [memory quality and scale report](evals/quality_and_scale.md) documents a
+full 500-question LongMemEval-S cleaned paired answer run: **333/500 (66.6%)**
+correct with retrieved memory versus **26/500 (5.2%)** without it. This is a
+Bedrock-judged result, not the benchmark's official GPT-4o score, and indexes
+full sessions rather than testing the fact extractor. The report also covers
+explicit temporal fact comparison and a **local Windows** 100,000-row
+exact-versus-indexed search test.
 
 | Mode | N | Recall@1 | Recall@3 | Recall@5 | MRR | Stale rate | Leak rate | Median ms |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |

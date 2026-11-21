@@ -25,6 +25,8 @@ jobs:
         run: uv sync --locked
       - name: Run offline tests
         run: uv run --offline pytest -q
+      - name: Verify published answer evidence
+        run: uv run --offline python -m evals.verify_answer_evidence
       - name: Lint
         run: uv run --offline ruff check .
       - name: Format

@@ -25,6 +25,67 @@ judgments can be wrong; inspect a sample of disagreements before using this
 to make product decisions. The context budget is explicit and complete
 sessions that do not fit are skipped, not silently truncated.
 
+## Full 500-question answer result
+
+The run completed all **500 LongMemEval-S cleaned questions**, including 30
+abstentions, on 21 November 2026. It indexed 23,867 full history sessions in
+25-question chunks. The dataset SHA-256 was
+`d6f21ea9d60a0d56f34a05b609c79c88a451d2ae03597821ea3d5a9678c3a442`.
+Both arms used Bedrock `us.anthropic.claude-haiku-4-5-20251001-v1:0` at
+temperature zero. The separate judge was `us.anthropic.claude-sonnet-4-6`.
+The memory arm retrieved up to five sessions with the 0.5-weight hybrid
+retriever and admitted complete sessions up to an 80,000-character budget.
+The baseline saw the same question and current date without history.
+
+| Measure | Without memory | With retrieved memory |
+| --- | ---: | ---: |
+| Bedrock-judged correct answers | 26 / 500 (5.2%) | 333 / 500 (66.6%) |
+
+Memory alone won 309 paired questions; baseline alone won two. Both were
+correct on 24 and both were wrong on 165. The 61.4 percentage-point gap is
+specific to this dataset, prompt, retriever, context budget, reader, and
+judge. It is not a production user accuracy estimate.
+
+| LongMemEval question type | N | Without memory | With memory |
+| --- | ---: | ---: | ---: |
+| Knowledge update | 78 | 6 (7.7%) | 56 (71.8%) |
+| Multi-session | 133 | 10 (7.5%) | 76 (57.1%) |
+| Single-session assistant | 56 | 0 (0%) | 56 (100%) |
+| Single-session preference | 30 | 0 (0%) | 14 (46.7%) |
+| Single-session user | 70 | 6 (8.6%) | 63 (90.0%) |
+| Temporal reasoning | 133 | 4 (3.0%) | 68 (51.1%) |
+
+For the 470 answerable questions, all gold evidence sessions appeared in the
+top five on 414 (88.1%); at least one gold session appeared on 457 (97.2%).
+After applying the context budget, all gold sessions remained on 408
+(86.8%). These evidence rates explain some answer failures but do not prove
+that the model used the retrieved evidence correctly.
+
+The committed [summary](longmemeval_answer_summary.json),
+[manifest](longmemeval_answer_manifest.json), and
+[text-free per-question verdicts](longmemeval_answer_labels.jsonl) are
+independently checked by `python -m evals.verify_answer_evidence` in CI.
+With the public dataset and exact source archive available, the verifier also
+checks their hashes. The raw answers, judge text, and instance log are stored
+only in the local ignored archive
+`data/aws-answer/longmemeval-answer-results-20261121.zip` (SHA-256
+`38755868a5908e24265d0d8685ba439e781cca8b2712182f49803799035e967d`).
+The archived source was built from commit `d7ccb02`; its SHA-256 was
+`c6c492d6a4d75f876b1b4f313d8486c06b7aa2ccd50a562362a56a9a3e85c46a`.
+Windows archive line endings differ from the Git blob, and the normalized
+runner content was checked to be identical. The AWS instance exited zero
+after writing a `COMPLETE` summary; all temporary AWS resources were removed
+after the downloaded checkpoint passed an independent 500-case audit.
+
+This evaluation indexes full sessions as memory rows. It does **not** test
+the agent's fact extractor on those histories, natural-language temporal
+query parsing, concurrent writers, or real user satisfaction. The judge is
+not the benchmark's [published GPT-4o evaluator](https://github.com/xiaowu0162/LongMemEval/blob/main/src/evaluation/evaluate_qa.py),
+and automatic judgments may contain errors. A fixed sample of wins, losses,
+and misses was inspected, but the 500 judgments have not all been reviewed by
+humans. This is a reproducible Bedrock-judged public-dataset result, not an
+official leaderboard score.
+
 ## Fact updates and time
 
 `MemoryStore.add` uses `(user_id, topic)` as its explicit fact identity. An
@@ -79,7 +140,8 @@ Reproduce with a clean environment:
 ```sh
 uv sync --locked --extra bedrock
 uv run --offline python -m evals.scale_100k --rows 100000 --queries 100 --partitions 256 --nprobes 256 --output evals/scale_100k_nprobes256.json
-uv run --offline python -m evals.longmemeval_answers --dataset data/longmemeval_s_cleaned.json --output data/answer-full --profile YOUR_AWS_PROFILE --region us-east-1 --reader-model YOUR_BEDROCK_READER_ID --judge-model YOUR_BEDROCK_JUDGE_ID
+uv run --offline python -m evals.longmemeval_answers --dataset data/longmemeval_s_cleaned.json --output data/answer-full --profile YOUR_AWS_PROFILE --region us-east-1 --reader-model us.anthropic.claude-haiku-4-5-20251001-v1:0 --judge-model us.anthropic.claude-sonnet-4-6
+uv run --offline python -m evals.verify_answer_evidence
 ```
 
 The public dataset and BGE model must be downloaded separately. The answer
