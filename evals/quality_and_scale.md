@@ -112,10 +112,11 @@ uv run python -m agent_memory.cli compare --user alice --topic home_city --befor
 384-dimensional normalized vectors with the same schema as the memory store.
 The 100 query vectors were sampled from stored rows. The script compared
 exact scans against an `IVF_FLAT` index with 256 partitions on the same data.
-All results below are actual local Windows measurements. `Recall@10` is
-index overlap with exact top 10, not semantic answer quality. The exact
-median shown is the post-index exact scan in the same run; p50 times are
-single-host, warm-cache observations, not service-level guarantees.
+`Recall@10` is index overlap with exact top 10, not semantic answer quality.
+The exact median shown is the post-index exact scan in the same run; p50
+times are single-host, warm-cache observations, not service-level guarantees.
+
+### Local Windows run
 
 | Probes | Exact p50 ms | Indexed p50 ms | Indexed p95 ms | Recall@10 | Top-1 agreement |
 | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -123,24 +124,56 @@ single-host, warm-cache observations, not service-level guarantees.
 | 128 | 76.5 | 24.4 | 37.3 | 76.8% | 100% |
 | 256 | 107.3 | 37.9 | 51.8 | 100% | 100% |
 
-The 16-probe setting is unsuitable when top-10 completeness matters. Probing
-all partitions matched exact top 10 on these 100 queries and had a 2.8x
-lower median than the within-run exact scan. The IVF_FLAT index took 4.0 to
-6.6 seconds to build; the stored table and index occupied about 315 MB.
-These seeded query vectors guarantee an exact stored match, which makes
-top-1 easy and limits generalization to real embedding queries. The table is
-synthetic and has no concurrent writes, network latency, or multi-user
-filters. The raw summaries are
+Probing all partitions matched exact top 10 on these 100 queries and had a
+2.8x lower median than the within-run exact scan. The IVF_FLAT index took
+4.0 to 6.6 seconds to build. The raw local summaries are
 [`16 probes`](scale_100k_summary.json),
 [`128 probes`](scale_100k_nprobes128.json), and
 [`256 probes`](scale_100k_nprobes256.json).
+
+### AWS c7i.4xlarge run
+
+The same committed script, seed, row count, dimensions, 100 sampled queries,
+and probe settings ran on Amazon Linux 2023 with Python 3.11. This is a
+separate measurement, not a repeat on identical hardware.
+
+| Probes | Exact p50 ms | Indexed p50 ms | Indexed p95 ms | Recall@10 | Top-1 agreement |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 16 | 19.8 | 12.0 | 14.4 | 25.5% | 100% |
+| 128 | 17.4 | 18.8 | 21.2 | 78.7% | 100% |
+| 256 | 17.1 | 25.2 | 27.9 | 100% | 100% |
+
+The 256-probe index was **slower than exact search on AWS** despite matching
+its top 10 on all 100 queries. The 16-probe index was faster but missed most
+of the exact top-10 neighbors. Index build time was 1.6 to 1.7 seconds and
+the table plus index occupied about 315 MB. This reversal from the local
+Windows timing means these runs do not justify making ANN the default for
+100k memories. Benchmark on the target hardware with a required recall
+threshold before choosing index settings. The raw AWS summaries are
+[`16 probes`](scale_100k_aws_nprobes16.json),
+[`128 probes`](scale_100k_aws_nprobes128.json), and
+[`256 probes`](scale_100k_aws_nprobes256.json).
+The AWS run used source archive SHA-256
+`ac4a6d9cd4e8419a3c60cdf84271de4228c972caf622d71398115d52ad6baffc`
+from commit `f1b12b8`. Its three summaries and successful instance log are
+preserved in the ignored local archive
+`data/aws-scale/aws-scale-results-20261121.zip` (SHA-256
+`560036900be89708c9de528cbe9f557cf9d148719312b1cf5de12b7efb0df494`).
+The temporary instance, role, profile, security group, and bucket were
+removed after the archive passed verification.
+
+These seeded query vectors guarantee an exact stored match, which makes
+top-1 easy and limits generalization to real embedding queries. The table is
+synthetic and has no concurrent writes, network latency, or multi-user
+filters. Each setting was run once on each host, so the timing comparison
+also lacks repeated-run variance estimates.
 
 Reproduce with a clean environment:
 
 ```sh
 uv sync --locked --extra bedrock
 uv run --offline python -m evals.scale_100k --rows 100000 --queries 100 --partitions 256 --nprobes 256 --output evals/scale_100k_nprobes256.json
-uv run --offline python -m evals.longmemeval_answers --dataset data/longmemeval_s_cleaned.json --output data/answer-full --profile YOUR_AWS_PROFILE --region us-east-1 --reader-model us.anthropic.claude-haiku-4-5-20251001-v1:0 --judge-model us.anthropic.claude-sonnet-4-6
+uv run python -m evals.longmemeval_answers --dataset data/longmemeval_s_cleaned.json --output data/answer-full --profile YOUR_AWS_PROFILE --region us-east-1 --reader-model us.anthropic.claude-haiku-4-5-20251001-v1:0 --judge-model us.anthropic.claude-sonnet-4-6
 uv run --offline python -m evals.verify_answer_evidence
 ```
 

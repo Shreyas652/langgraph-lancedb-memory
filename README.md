@@ -51,8 +51,9 @@ full 500-question LongMemEval-S cleaned paired answer run: **333/500 (66.6%)**
 correct with retrieved memory versus **26/500 (5.2%)** without it. This is a
 Bedrock-judged result, not the benchmark's official GPT-4o score, and indexes
 full sessions rather than testing the fact extractor. The report also covers
-explicit temporal fact comparison and a **local Windows** 100,000-row
-exact-versus-indexed search test.
+explicit temporal fact comparison and 100,000-row exact-versus-indexed search
+tests on **local Windows and AWS**. The full-probe index matched exact top-10
+neighbors in both runs but was faster only on the local host.
 
 | Mode | N | Recall@1 | Recall@3 | Recall@5 | MRR | Stale rate | Leak rate | Median ms |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
