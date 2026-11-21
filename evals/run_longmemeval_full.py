@@ -48,9 +48,7 @@ def validate_chunk(
         if any(not isinstance(rank, int) or rank < 0 or rank > k for rank in ranks):
             raise ValueError(f"Chunk at offset {offset} has invalid {mode} ranks")
         if any(
-            not isinstance(latency, (int, float))
-            or not math.isfinite(latency)
-            or latency < 0
+            not isinstance(latency, (int, float)) or not math.isfinite(latency) or latency < 0
             for latency in latencies
         ):
             raise ValueError(f"Chunk at offset {offset} has invalid {mode} latencies")

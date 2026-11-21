@@ -1,4 +1,4 @@
-"""Session-retrieval pilot on the official LongMemEval cleaned small split.
+"""Session evidence retrieval on the official LongMemEval cleaned small split.
 
 This measures evidence-session retrieval, not answer accuracy. The official
 dataset must be downloaded separately; it is never committed to this repo.
@@ -91,7 +91,7 @@ def measure(
     latencies_out: list[float] | None = None,
     ranks_out: list[int] | None = None,
 ) -> dict[str, float]:
-    """Measure evidence-session recall and MRR over non-abstention cases."""
+    """Measure any-evidence hits and first-gold MRR over non-abstention cases."""
     hits_1 = hits_5 = hits_k = 0
     reciprocal_rank = 0.0
     latencies = []
@@ -114,9 +114,9 @@ def measure(
     if latencies_out is not None:
         latencies_out.extend(latencies)
     return {
-        "recall_1": hits_1 / n,
-        "recall_5": hits_5 / n,
-        "recall_k": hits_k / n,
+        "hit_1": hits_1 / n,
+        "hit_5": hits_5 / n,
+        "hit_k": hits_k / n,
         "mrr": reciprocal_rank / n,
         "median_ms": statistics.median(latencies),
     }
@@ -148,23 +148,21 @@ def main() -> None:
         store = MemoryStore(Path(temporary) / "memory.lance", embedder)
         seed_sessions(store, cases)
         print(f"Indexed {store.table.count_rows()} sessions for {len(cases)} questions")
-        print("Mode,Weight,Recall@1,Recall@5,Recall@K,MRR,MedianMs")
+        print("Mode,Weight,Hit@1,Hit@5,Hit@K,MRR@K,MedianMs")
         results = {}
         for mode, weight in [("vector", 1.0), *(("hybrid", w) for w in args.weights)]:
             store.hybrid_vector_weight = weight
             latencies: list[float] = []
             ranks: list[int] = []
-            score = measure(
-                store, cases, mode, args.k, latencies_out=latencies, ranks_out=ranks
-            )
+            score = measure(store, cases, mode, args.k, latencies_out=latencies, ranks_out=ranks)
             results[f"{mode}:{weight:.2f}"] = {
                 "score": score,
                 "latencies_ms": latencies,
                 "ranks": ranks,
             }
             print(
-                f"{mode},{weight:.2f},{score['recall_1']:.3f},{score['recall_5']:.3f},"
-                f"{score['recall_k']:.3f},{score['mrr']:.3f},{score['median_ms']:.1f}"
+                f"{mode},{weight:.2f},{score['hit_1']:.3f},{score['hit_5']:.3f},"
+                f"{score['hit_k']:.3f},{score['mrr']:.3f},{score['median_ms']:.1f}"
             )
         if args.json_output is not None:
             args.json_output.parent.mkdir(parents=True, exist_ok=True)

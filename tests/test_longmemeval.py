@@ -30,7 +30,7 @@ def test_longmemeval_adapter_scopes_sessions_and_skips_abstentions(tmp_path):
     seed_sessions(store, cases, batch_size=1)
     assert store.table.count_rows() == 2
     assert all(row.user_id == "q1" for row in store.search("q1", "Denver", mode="hybrid"))
-    assert measure(store, cases, "vector", 5)["recall_1"] == 1.0
+    assert measure(store, cases, "vector", 5)["hit_1"] == 1.0
 
 
 def test_full_benchmark_aggregation_uses_question_counts_and_global_median():

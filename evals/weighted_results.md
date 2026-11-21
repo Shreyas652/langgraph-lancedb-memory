@@ -49,6 +49,8 @@ Equal-weight hybrid improves Hit@1 by **8.1 percentage points** over vector-only
 
 The [summary](longmemeval_full_summary.json), [run manifest](longmemeval_full_manifest.json), and [per-question first-gold ranks](longmemeval_full_rankings.jsonl) are committed for audit. The raw dataset and model are not committed. The full local result archive contains all 19 checkpoint files and the instance log; an independent verifier checked unique question coverage, source and dataset hashes, session counts, ranks, and recomputed scores before the temporary AWS resources were removed.
 
+The exact run source is preserved at commit `87c1bfa`. A later naming-only change labels the metric `Hit@k` in the CLI and code, matching the any-evidence calculation already used in that run.
+
 To reproduce after downloading `longmemeval_s_cleaned.json` to `data/` and caching the BGE model in `data/models`:
 
 ```sh
