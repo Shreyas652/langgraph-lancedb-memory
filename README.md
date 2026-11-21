@@ -1,6 +1,32 @@
 # LangGraph + LanceDB long-term memory
 
-Agents need durable facts across conversations, and a chat thread alone cannot provide them. This example stores user-scoped memories in embedded LanceDB, which provides local vector search, full-text search, and filters in one table without a database server. A LangGraph agent recalls relevant memories, answers, and saves newly stated facts. Synthetic and public-dataset evaluations measure retrieval and answer quality, stale results, and cross-user leakage.
+## Headline result
+
+On all **500 LongMemEval-S cleaned questions**, retrieved session memory raised
+Claude-judged answer accuracy from **26/500 (5.2%)** without memory to
+**333/500 (66.6%)** with memory. Claude Haiku 4.5 answered both arms and
+Claude Sonnet 4.6 graded them. The [evaluation report](evals/quality_and_scale.md)
+includes the protocol, per-question verdicts, and reproducibility checks.
+
+| Question type | Questions | Without memory | With memory |
+| --- | ---: | ---: | ---: |
+| Knowledge update | 78 | 6 (7.7%) | 56 (71.8%) |
+| Multi-session | 133 | 10 (7.5%) | 76 (57.1%) |
+| Single-session assistant | 56 | 0 (0%) | 56 (100%) |
+| Single-session preference | 30 | 0 (0%) | 14 (46.7%) |
+| Single-session user | 70 | 6 (8.6%) | 63 (90.0%) |
+| Temporal reasoning | 133 | 4 (3.0%) | 68 (51.1%) |
+
+**Caveat:** Claude graded these answers, not the benchmark's official GPT-4o
+grader; the run stored whole sessions and did not test the fact extractor.
+
+Agents need durable facts across conversations, and a chat thread alone cannot
+provide them. This example stores user-scoped memories in embedded LanceDB,
+which provides local vector search, full-text search, and filters in one table
+without a database server. A LangGraph agent recalls relevant memories,
+answers, and saves newly stated facts. Synthetic and public-dataset
+evaluations measure retrieval and answer quality, stale results, and
+cross-user leakage.
 
 ## Architecture
 
@@ -46,11 +72,7 @@ The hand-written synthetic dataset has 54 memories for three users across four s
 
 The weighted-fusion sweep and a full 470-question LongMemEval-S cleaned evidence-retrieval run are documented in [evals/weighted_results.md](evals/weighted_results.md). Equal-weight hybrid led the public-data run, so the default remains 0.5. These are retrieval results, not answer-accuracy scores.
 
-The [memory quality and scale report](evals/quality_and_scale.md) documents a
-full 500-question LongMemEval-S cleaned paired answer run: **333/500 (66.6%)**
-correct with retrieved memory versus **26/500 (5.2%)** without it. This is a
-Bedrock-judged result, not the benchmark's official GPT-4o score, and indexes
-full sessions rather than testing the fact extractor. The report also covers
+The [memory quality and scale report](evals/quality_and_scale.md) also covers
 explicit temporal fact comparison and 100,000-row exact-versus-indexed search
 tests on **local Windows and AWS**. The full-probe index matched exact top-10
 neighbors in both runs but was faster only on the local host.
