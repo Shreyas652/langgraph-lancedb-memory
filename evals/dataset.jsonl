@@ -1,0 +1,99 @@
+{"record":"memory","id":"a01","user_id":"alice","session":1,"created_at":"2026-01-01T09:01:00Z","kind":"fact","topic":"home_city","text":"Alice lives in Austin, Texas."}
+{"record":"memory","id":"a02","user_id":"alice","session":1,"created_at":"2026-01-01T09:02:00Z","kind":"preference","topic":"diet","text":"Alice eats an omnivorous diet and likes chicken tacos."}
+{"record":"memory","id":"a03","user_id":"alice","session":1,"created_at":"2026-01-01T09:03:00Z","kind":"fact","topic":"job_title","text":"Alice works as a data analyst."}
+{"record":"memory","id":"a04","user_id":"alice","session":1,"created_at":"2026-01-01T09:04:00Z","kind":"preference","topic":"drink","text":"Alice prefers jasmine green tea."}
+{"record":"memory","id":"a05","user_id":"alice","session":1,"created_at":"2026-01-01T09:05:00Z","kind":"fact","topic":"timezone","text":"Alice uses the America/Chicago time zone."}
+{"record":"memory","id":"a06","user_id":"alice","session":2,"created_at":"2026-01-04T09:01:00Z","kind":"fact","topic":"pet","text":"Alice has a rescue cat named Pixel."}
+{"record":"memory","id":"a07","user_id":"alice","session":2,"created_at":"2026-01-04T09:02:00Z","kind":"preference","topic":"meeting_time","text":"Alice prefers meetings before noon."}
+{"record":"memory","id":"a08","user_id":"alice","session":2,"created_at":"2026-01-04T09:03:00Z","kind":"fact","topic":"code_language","text":"Alice's main programming language is Python."}
+{"record":"memory","id":"a09","user_id":"alice","session":2,"created_at":"2026-01-04T09:04:00Z","kind":"event","topic":"conference","text":"Alice plans to attend the PyData conference in April."}
+{"record":"memory","id":"a10","user_id":"alice","session":3,"created_at":"2026-01-07T09:01:00Z","kind":"fact","topic":"shipping","text":"Alice's package delivery address is the Cedar Street office."}
+{"record":"memory","id":"a11","user_id":"alice","session":3,"created_at":"2026-01-07T09:02:00Z","kind":"preference","topic":"music","text":"Alice likes instrumental jazz while coding."}
+{"record":"memory","id":"a12","user_id":"alice","session":3,"created_at":"2026-01-07T09:03:00Z","kind":"fact","topic":"project","text":"Alice is building a wildfire mapping dashboard."}
+{"record":"memory","id":"a13","user_id":"alice","session":3,"created_at":"2026-01-07T09:04:00Z","kind":"preference","topic":"notification","text":"Alice wants urgent alerts by text message."}
+{"record":"memory","id":"a14","user_id":"alice","session":3,"created_at":"2026-01-07T09:05:00Z","kind":"fact","topic":"laptop","text":"Alice uses a ThinkPad X1 laptop."}
+{"record":"memory","id":"a15","user_id":"alice","session":4,"created_at":"2026-01-10T09:01:00Z","kind":"fact","topic":"home_city","text":"Alice moved to Denver, Colorado, and lives there now."}
+{"record":"memory","id":"a16","user_id":"alice","session":4,"created_at":"2026-01-10T09:02:00Z","kind":"preference","topic":"diet","text":"Alice now follows a vegetarian diet."}
+{"record":"memory","id":"a17","user_id":"alice","session":4,"created_at":"2026-01-10T09:03:00Z","kind":"fact","topic":"job_title","text":"Alice is now a product designer."}
+{"record":"memory","id":"a18","user_id":"alice","session":4,"created_at":"2026-01-10T09:04:00Z","kind":"preference","topic":"travel","text":"Alice prefers train travel to short flights."}
+{"record":"memory","id":"b01","user_id":"bob","session":1,"created_at":"2026-01-01T10:01:00Z","kind":"fact","topic":"home_city","text":"Bob lives in Seattle, Washington."}
+{"record":"memory","id":"b02","user_id":"bob","session":1,"created_at":"2026-01-01T10:02:00Z","kind":"preference","topic":"drink","text":"Bob orders black coffee in the morning."}
+{"record":"memory","id":"b03","user_id":"bob","session":1,"created_at":"2026-01-01T10:03:00Z","kind":"fact","topic":"job_title","text":"Bob is an engineering manager."}
+{"record":"memory","id":"b04","user_id":"bob","session":1,"created_at":"2026-01-01T10:04:00Z","kind":"preference","topic":"diet","text":"Bob avoids peanuts in meals."}
+{"record":"memory","id":"b05","user_id":"bob","session":1,"created_at":"2026-01-01T10:05:00Z","kind":"fact","topic":"timezone","text":"Bob uses the America/Los_Angeles time zone."}
+{"record":"memory","id":"b06","user_id":"bob","session":2,"created_at":"2026-01-04T10:01:00Z","kind":"fact","topic":"pet","text":"Bob has a dog named Orbit."}
+{"record":"memory","id":"b07","user_id":"bob","session":2,"created_at":"2026-01-04T10:02:00Z","kind":"preference","topic":"meeting_time","text":"Bob prefers meetings after lunch."}
+{"record":"memory","id":"b08","user_id":"bob","session":2,"created_at":"2026-01-04T10:03:00Z","kind":"fact","topic":"code_language","text":"Bob writes most services in Go."}
+{"record":"memory","id":"b09","user_id":"bob","session":2,"created_at":"2026-01-04T10:04:00Z","kind":"event","topic":"conference","text":"Bob will speak at KubeCon in November."}
+{"record":"memory","id":"b10","user_id":"bob","session":3,"created_at":"2026-01-07T10:01:00Z","kind":"fact","topic":"shipping","text":"Bob receives packages at the Pine Avenue studio."}
+{"record":"memory","id":"b11","user_id":"bob","session":3,"created_at":"2026-01-07T10:02:00Z","kind":"preference","topic":"music","text":"Bob listens to ambient electronic music while coding."}
+{"record":"memory","id":"b12","user_id":"bob","session":3,"created_at":"2026-01-07T10:03:00Z","kind":"fact","topic":"project","text":"Bob maintains a Kubernetes cost dashboard."}
+{"record":"memory","id":"b13","user_id":"bob","session":3,"created_at":"2026-01-07T10:04:00Z","kind":"preference","topic":"notification","text":"Bob wants urgent alerts by email."}
+{"record":"memory","id":"b14","user_id":"bob","session":3,"created_at":"2026-01-07T10:05:00Z","kind":"fact","topic":"laptop","text":"Bob uses a MacBook Pro laptop."}
+{"record":"memory","id":"b15","user_id":"bob","session":4,"created_at":"2026-01-10T10:01:00Z","kind":"fact","topic":"home_city","text":"Bob moved to Portland, Oregon, and lives there now."}
+{"record":"memory","id":"b16","user_id":"bob","session":4,"created_at":"2026-01-10T10:02:00Z","kind":"preference","topic":"drink","text":"Bob switched from coffee to peppermint tea."}
+{"record":"memory","id":"b17","user_id":"bob","session":4,"created_at":"2026-01-10T10:03:00Z","kind":"fact","topic":"job_title","text":"Bob is now a staff software engineer."}
+{"record":"memory","id":"b18","user_id":"bob","session":4,"created_at":"2026-01-10T10:04:00Z","kind":"preference","topic":"travel","text":"Bob prefers cycling for trips under five miles."}
+{"record":"memory","id":"c01","user_id":"clara","session":1,"created_at":"2026-01-01T11:01:00Z","kind":"fact","topic":"home_city","text":"Clara lives in Miami, Florida."}
+{"record":"memory","id":"c02","user_id":"clara","session":1,"created_at":"2026-01-01T11:02:00Z","kind":"fact","topic":"pet","text":"Clara has a cat named Comet."}
+{"record":"memory","id":"c03","user_id":"clara","session":1,"created_at":"2026-01-01T11:03:00Z","kind":"fact","topic":"workplace","text":"Clara works at Acme Robotics."}
+{"record":"memory","id":"c04","user_id":"clara","session":1,"created_at":"2026-01-01T11:04:00Z","kind":"preference","topic":"diet","text":"Clara likes spicy tofu bowls."}
+{"record":"memory","id":"c05","user_id":"clara","session":1,"created_at":"2026-01-01T11:05:00Z","kind":"fact","topic":"timezone","text":"Clara uses the America/New_York time zone."}
+{"record":"memory","id":"c06","user_id":"clara","session":2,"created_at":"2026-01-04T11:01:00Z","kind":"preference","topic":"drink","text":"Clara prefers iced matcha latte."}
+{"record":"memory","id":"c07","user_id":"clara","session":2,"created_at":"2026-01-04T11:02:00Z","kind":"preference","topic":"meeting_time","text":"Clara prefers meetings in the late afternoon."}
+{"record":"memory","id":"c08","user_id":"clara","session":2,"created_at":"2026-01-04T11:03:00Z","kind":"fact","topic":"code_language","text":"Clara programs embedded devices in Rust."}
+{"record":"memory","id":"c09","user_id":"clara","session":2,"created_at":"2026-01-04T11:04:00Z","kind":"event","topic":"conference","text":"Clara will attend ROSCon in October."}
+{"record":"memory","id":"c10","user_id":"clara","session":3,"created_at":"2026-01-07T11:01:00Z","kind":"fact","topic":"shipping","text":"Clara receives deliveries at the Oak Road laboratory."}
+{"record":"memory","id":"c11","user_id":"clara","session":3,"created_at":"2026-01-07T11:02:00Z","kind":"preference","topic":"music","text":"Clara listens to classical piano while coding."}
+{"record":"memory","id":"c12","user_id":"clara","session":3,"created_at":"2026-01-07T11:03:00Z","kind":"fact","topic":"project","text":"Clara is building a warehouse robot navigation stack."}
+{"record":"memory","id":"c13","user_id":"clara","session":3,"created_at":"2026-01-07T11:04:00Z","kind":"preference","topic":"notification","text":"Clara wants urgent alerts in a phone call."}
+{"record":"memory","id":"c14","user_id":"clara","session":3,"created_at":"2026-01-07T11:05:00Z","kind":"fact","topic":"laptop","text":"Clara uses a Framework 13 laptop."}
+{"record":"memory","id":"c15","user_id":"clara","session":4,"created_at":"2026-01-10T11:01:00Z","kind":"fact","topic":"home_city","text":"Clara moved to Boston, Massachusetts, and lives there now."}
+{"record":"memory","id":"c16","user_id":"clara","session":4,"created_at":"2026-01-10T11:02:00Z","kind":"fact","topic":"pet","text":"Clara now has a dog named Nova instead of a cat."}
+{"record":"memory","id":"c17","user_id":"clara","session":4,"created_at":"2026-01-10T11:03:00Z","kind":"fact","topic":"workplace","text":"Clara now works at Northstar Robotics."}
+{"record":"memory","id":"c18","user_id":"clara","session":4,"created_at":"2026-01-10T11:04:00Z","kind":"preference","topic":"travel","text":"Clara prefers the subway for commuting."}
+{"record":"question","id":"q01","user_id":"alice","type":"direct","question":"What tea does Alice prefer?","gold_ids":["a04"]}
+{"record":"question","id":"q02","user_id":"alice","type":"direct","question":"What is the name of Alice's rescue cat?","gold_ids":["a06"]}
+{"record":"question","id":"q03","user_id":"alice","type":"direct","question":"What is Alice's main programming language?","gold_ids":["a08"]}
+{"record":"question","id":"q04","user_id":"alice","type":"direct","question":"Which conference will Alice attend in April?","gold_ids":["a09"]}
+{"record":"question","id":"q05","user_id":"alice","type":"direct","question":"Which laptop does Alice use?","gold_ids":["a14"]}
+{"record":"question","id":"q06","user_id":"alice","type":"paraphrase","question":"Which clock region should scheduling use for Alice?","gold_ids":["a05"]}
+{"record":"question","id":"q07","user_id":"alice","type":"paraphrase","question":"Should Alice's calendar invite be placed in the morning or evening?","gold_ids":["a07"]}
+{"record":"question","id":"q08","user_id":"alice","type":"paraphrase","question":"Where should a parcel for Alice be sent?","gold_ids":["a10"]}
+{"record":"question","id":"q09","user_id":"alice","type":"paraphrase","question":"How should Alice receive a critical notification?","gold_ids":["a13"]}
+{"record":"question","id":"q10","user_id":"alice","type":"updated","question":"What city does Alice live in now?","gold_ids":["a15"],"stale_ids":["a01"]}
+{"record":"question","id":"q11","user_id":"alice","type":"updated","question":"What should Alice's current diet be called?","gold_ids":["a16"],"stale_ids":["a02"]}
+{"record":"question","id":"q12","user_id":"alice","type":"updated","question":"What is Alice's present job title?","gold_ids":["a17"],"stale_ids":["a03"]}
+{"record":"question","id":"q13","user_id":"alice","type":"cross_user","question":"What music does Alice listen to while coding?","gold_ids":["a11"]}
+{"record":"question","id":"q14","user_id":"alice","type":"cross_user","question":"What dashboard is Alice building?","gold_ids":["a12"]}
+{"record":"question","id":"q15","user_id":"alice","type":"cross_user","question":"What transport does Alice prefer for short trips?","gold_ids":["a18"]}
+{"record":"question","id":"q16","user_id":"bob","type":"direct","question":"What food does Bob avoid in meals?","gold_ids":["b04"]}
+{"record":"question","id":"q17","user_id":"bob","type":"direct","question":"What is the name of Bob's dog?","gold_ids":["b06"]}
+{"record":"question","id":"q18","user_id":"bob","type":"direct","question":"What programming language does Bob write services in?","gold_ids":["b08"]}
+{"record":"question","id":"q19","user_id":"bob","type":"direct","question":"Which conference will Bob speak at in November?","gold_ids":["b09"]}
+{"record":"question","id":"q20","user_id":"bob","type":"direct","question":"Which laptop does Bob use?","gold_ids":["b14"]}
+{"record":"question","id":"q21","user_id":"bob","type":"paraphrase","question":"Which clock region should scheduling use for Bob?","gold_ids":["b05"]}
+{"record":"question","id":"q22","user_id":"bob","type":"paraphrase","question":"When in the day should Bob be invited to a meeting?","gold_ids":["b07"]}
+{"record":"question","id":"q23","user_id":"bob","type":"paraphrase","question":"Where should a parcel for Bob be delivered?","gold_ids":["b10"]}
+{"record":"question","id":"q24","user_id":"bob","type":"paraphrase","question":"Which channel should a high-priority notification to Bob use?","gold_ids":["b13"]}
+{"record":"question","id":"q25","user_id":"bob","type":"updated","question":"What city does Bob live in now?","gold_ids":["b15"],"stale_ids":["b01"]}
+{"record":"question","id":"q26","user_id":"bob","type":"updated","question":"What does Bob currently drink instead of coffee?","gold_ids":["b16"],"stale_ids":["b02"]}
+{"record":"question","id":"q27","user_id":"bob","type":"updated","question":"What is Bob's present job title?","gold_ids":["b17"],"stale_ids":["b03"]}
+{"record":"question","id":"q28","user_id":"bob","type":"cross_user","question":"What music does Bob listen to while coding?","gold_ids":["b11"]}
+{"record":"question","id":"q29","user_id":"bob","type":"cross_user","question":"What dashboard does Bob maintain?","gold_ids":["b12"]}
+{"record":"question","id":"q30","user_id":"bob","type":"cross_user","question":"How does Bob prefer to travel under five miles?","gold_ids":["b18"]}
+{"record":"question","id":"q31","user_id":"clara","type":"direct","question":"What food does Clara like?","gold_ids":["c04"]}
+{"record":"question","id":"q32","user_id":"clara","type":"direct","question":"What drink does Clara prefer?","gold_ids":["c06"]}
+{"record":"question","id":"q33","user_id":"clara","type":"direct","question":"Which language does Clara program embedded devices in?","gold_ids":["c08"]}
+{"record":"question","id":"q34","user_id":"clara","type":"direct","question":"Which conference will Clara attend in October?","gold_ids":["c09"]}
+{"record":"question","id":"q35","user_id":"clara","type":"direct","question":"Which laptop does Clara use?","gold_ids":["c14"]}
+{"record":"question","id":"q36","user_id":"clara","type":"paraphrase","question":"Which clock region should scheduling use for Clara?","gold_ids":["c05"]}
+{"record":"question","id":"q37","user_id":"clara","type":"paraphrase","question":"When should Clara's calendar invite be scheduled?","gold_ids":["c07"]}
+{"record":"question","id":"q38","user_id":"clara","type":"paraphrase","question":"Where should a parcel for Clara be sent?","gold_ids":["c10"]}
+{"record":"question","id":"q39","user_id":"clara","type":"paraphrase","question":"How should Clara receive a critical notification?","gold_ids":["c13"]}
+{"record":"question","id":"q40","user_id":"clara","type":"updated","question":"What city does Clara live in now?","gold_ids":["c15"],"stale_ids":["c01"]}
+{"record":"question","id":"q41","user_id":"clara","type":"updated","question":"What pet does Clara have now?","gold_ids":["c16"],"stale_ids":["c02"]}
+{"record":"question","id":"q42","user_id":"clara","type":"updated","question":"Where does Clara work now?","gold_ids":["c17"],"stale_ids":["c03"]}
+{"record":"question","id":"q43","user_id":"clara","type":"cross_user","question":"What music does Clara listen to while coding?","gold_ids":["c11"]}
+{"record":"question","id":"q44","user_id":"clara","type":"cross_user","question":"What robotics project is Clara building?","gold_ids":["c12"]}
+{"record":"question","id":"q45","user_id":"clara","type":"cross_user","question":"What transport does Clara prefer for commuting?","gold_ids":["c18"]}
