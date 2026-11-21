@@ -91,10 +91,14 @@ class LiveLLM:
         return result.items
 
 
-def create_llm() -> AgentLLM:
-    """Use a configured live provider or the explicit offline FakeLLM demo."""
+def create_llm(*, demo: bool = False) -> AgentLLM:
+    """Require a live provider unless the caller explicitly requests the demo."""
     openai_key = os.environ.get("OPENAI_API_KEY")
     anthropic_key = os.environ.get("ANTHROPIC_API_KEY")
+    if demo:
+        if openai_key or anthropic_key:
+            raise ValueError("Unset provider API keys before using the offline demo")
+        return FakeLLM()
     if openai_key and anthropic_key:
         raise ValueError("Set only one LLM provider API key")
     if openai_key:
@@ -111,4 +115,4 @@ def create_llm() -> AgentLLM:
         if not model:
             raise ValueError("Set ANTHROPIC_MODEL when using ANTHROPIC_API_KEY")
         return LiveLLM(ChatAnthropic(model=model, api_key=anthropic_key))
-    return FakeLLM()
+    raise RuntimeError("No live LLM configured; set a provider key and model or use --demo")
