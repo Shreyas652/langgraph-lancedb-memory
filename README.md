@@ -55,6 +55,14 @@ and tests. The API derives its user ID from a validated token's issuer and subje
 clients cannot submit an arbitrary user ID. The model receives prior messages in the
 conversation, as well as retrieved long-term memories.
 
+**Users do not need a model, provider account, or provider API key.** The service
+operator configures one model provider on the server. Its key belongs only in the
+server process or secret manager; it is never sent to clients or included in an API
+response. Users authenticate to this API with their own OIDC access tokens. The
+operator pays for model calls, so add quotas and abuse controls before public access.
+If no operator-controlled model access is available, the live API cannot answer
+questions; the CLI's explicit demo is only for offline development.
+
 Install `uv sync --locked --extra server --extra openai` (or `--extra anthropic`).
 Configure `DATABASE_URL`, `MEMORY_DB_PATH`, `OIDC_ISSUER`, `OIDC_AUDIENCE`,
 `OIDC_JWKS_URL`, your provider model name, and its API key in the process environment.
