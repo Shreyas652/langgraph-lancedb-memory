@@ -4,10 +4,8 @@ import os
 import re
 from typing import Literal, Protocol
 
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.messages import AnyMessage, HumanMessage, SystemMessage
 from pydantic import BaseModel, Field
-
-from agent_memory.store import Memory
 
 
 class ExtractedMemory(BaseModel):
@@ -21,8 +19,8 @@ class ExtractedMemories(BaseModel):
 
 
 class AgentLLM(Protocol):
-    def respond(self, system_prompt: str, user_text: str, recalled: list[Memory]) -> str:
-        """Answer the current turn using only relevant remembered context."""
+    def respond(self, system_prompt: str, messages: list[AnyMessage], recalled: list[str]) -> str:
+        """Answer using the current thread and relevant remembered context."""
 
     def extract(self, user_text: str) -> list[ExtractedMemory]:
         """Extract durable memories from the user's statement."""
@@ -31,10 +29,15 @@ class AgentLLM(Protocol):
 class FakeLLM:
     """Offline demo model: deterministic output and deliberately narrow extraction."""
 
-    def respond(self, system_prompt: str, user_text: str, recalled: list[Memory]) -> str:
+    def respond(self, system_prompt: str, messages: list[AnyMessage], recalled: list[str]) -> str:
         del system_prompt
+        user_text = next(
+            message.content for message in reversed(messages) if isinstance(message, HumanMessage)
+        )
+        if not isinstance(user_text, str):
+            raise TypeError("Only text user messages are supported")
         if recalled:
-            facts = "; ".join(memory.text for memory in recalled)
+            facts = "; ".join(recalled)
             return f"I remember: {facts}. You asked: {user_text}"
         return f"I have no saved context yet. You said: {user_text}"
 
@@ -67,9 +70,9 @@ class LiveLLM:
     def __init__(self, model: object) -> None:
         self._model = model
 
-    def respond(self, system_prompt: str, user_text: str, recalled: list[Memory]) -> str:
+    def respond(self, system_prompt: str, messages: list[AnyMessage], recalled: list[str]) -> str:
         del recalled
-        response = self._model.invoke([SystemMessage(system_prompt), HumanMessage(user_text)])
+        response = self._model.invoke([SystemMessage(system_prompt), *messages])
         if not isinstance(response.content, str):
             raise TypeError("Expected a text response from the chat model")
         return response.content
