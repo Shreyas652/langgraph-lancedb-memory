@@ -10,6 +10,20 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: memory_test
+          POSTGRES_PASSWORD: memory_test
+          POSTGRES_DB: memory_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U memory_test -d memory_test"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
     strategy:
       fail-fast: false
       matrix:
@@ -22,9 +36,11 @@ jobs:
           version: "0.11.21"
           python-version: ${{ matrix.python-version }}
       - name: Install pinned dependencies
-        run: uv sync --locked
+        run: uv sync --locked --extra server
       - name: Run offline tests
-        run: uv run --offline pytest -q
+        env:
+          TEST_DATABASE_URL: postgresql://memory_test:memory_test@127.0.0.1:5432/memory_test
+        run: uv run --offline --extra server pytest -q
       - name: Verify published answer evidence
         run: uv run --offline python -m evals.verify_answer_evidence
       - name: Verify published GPT-4o evaluator results

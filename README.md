@@ -39,12 +39,62 @@ flowchart LR
     R --> A[Respond]
     A --> M[Remember]
     M -->|Supersede topic and store fact| DB
-    C[(InMemorySaver thread state)] <--> R
+    C[(Thread state: in-memory CLI / Postgres API)] <--> R
     C <--> A
     C <--> M
 ```
 
 `InMemorySaver` keeps a thread's message history only while the process runs. LanceDB persists memories across threads and process restarts. The CLI starts a new thread on each launch, so a later launch demonstrates cross-thread recall.
+
+## Authenticated API (code only)
+
+The optional HTTP service adds OIDC bearer-token verification, conversation ownership,
+PostgreSQL checkpoints, per-user memory listing, and account-data deletion. It requires
+a real OpenAI or Anthropic model; the deterministic demo is available only in the CLI
+and tests. The API derives its user ID from a validated token's issuer and subject;
+clients cannot submit an arbitrary user ID. The model receives prior messages in the
+conversation, as well as retrieved long-term memories.
+
+Install `uv sync --locked --extra server --extra openai` (or `--extra anthropic`).
+Configure `DATABASE_URL`, `MEMORY_DB_PATH`, `OIDC_ISSUER`, `OIDC_AUDIENCE`,
+`OIDC_JWKS_URL`, your provider model name, and its API key in the process environment.
+See [.env.example](.env.example) for names. Do not commit a populated `.env` file.
+The OIDC provider must issue RS256 **access tokens** with `iss`, `aud`, `sub`, `iat`,
+and `exp` claims. Point `OIDC_AUDIENCE` at the API audience, not a web client ID.
+Run `uv run --extra server --extra openai agent-memory-api` (or Anthropic).
+The entry point binds to `127.0.0.1:8000`; place it behind an HTTPS reverse proxy
+when serving remote users.
+
+```sh
+curl -X POST http://127.0.0.1:8000/v1/conversations \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+curl -X POST http://127.0.0.1:8000/v1/conversations/$CONVERSATION_ID/messages \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"request_id":"YOUR_NEW_UUID","text":"I live in Denver."}'
+```
+
+`GET /v1/conversations`, `GET /v1/conversations/{id}/messages`, and
+`GET /v1/memories?limit=20` read only the caller's data. `DELETE /v1/me` removes
+their conversation metadata, checkpoints, and LanceDB rows. The operation can be
+retried if a storage error interrupts it. Existing LanceDB data-file versions and
+backups may retain deleted bytes until retention and compaction policies run; do not
+promise physical erasure from this endpoint alone.
+
+Each message requires a new UUID `request_id`. Reusing the same ID and text returns
+the saved answer without calling the model again, including after a process restart.
+Reusing an ID with different text returns 409. If the process crashes after the graph
+checkpoint but before saving the answer, the retry recovers the completed turn.
+`MAX_CONVERSATION_MESSAGES` (default 40) bounds model context growth; when reached,
+start a new conversation. Long-term memories remain available across conversations.
+
+This service intentionally permits **one writer instance** for its local LanceDB
+directory. A PostgreSQL advisory lock makes a second instance fail startup; a
+process lock serializes local memory operations. Use a dedicated `MEMORY_DB_PATH`
+that the CLI and other processes do not write. This is a reviewable pilot, not a
+multi-replica deployment. Before serving real users, configure TLS, backups and
+retention, provider quotas, request limits, operational monitoring, and an identity
+provider; validate the memory extractor and deletion policy on consented data.
 
 ## Quickstart
 
@@ -64,7 +114,7 @@ After dependencies and the model are cached, the full evaluation runs without ne
 uv run --offline python evals/run_eval.py --offline
 ```
 
-The tests need no model download: `uv run --offline pytest -q` works after `uv sync --locked`. For a network-free runtime demo without BGE, add `--embedder hash` to the evaluation or chat command. Hash vectors are deterministic token features, not a semantic substitute for BGE. A literal clean clone with no package or model cache needs a one-time download; the repository does not vendor either.
+The CLI tests need no model download: `uv run --offline pytest -q tests/test_graph.py tests/test_store.py tests/test_llm.py` works after `uv sync --locked`. For the full suite, install `--extra server`; the PostgreSQL API integration test runs when `TEST_DATABASE_URL` is set and is otherwise skipped. For a network-free runtime demo without BGE, add `--embedder hash` to the evaluation or chat command. Hash vectors are deterministic token features, not a semantic substitute for BGE. A literal clean clone with no package or model cache needs a one-time download; the repository does not vendor either.
 
 For live chat, run `uv sync --locked --extra openai` or `uv sync --locked --extra anthropic`. Set exactly one provider key (`OPENAI_API_KEY` or `ANTHROPIC_API_KEY`) and its model name (`OPENAI_MODEL` or `ANTHROPIC_MODEL`), then run chat without `--demo`. Without a provider key, normal chat fails clearly instead of silently using a fake model. The explicit demo echoes recalled memories and extracts a few fixed patterns; it is not a general answer model.
 
@@ -98,7 +148,7 @@ Vector search performed best overall on this small dataset. RRF hybrid ranked ex
 
 ## Limits and next steps
 
-This is a local single-process example, not an authenticated multi-tenant service. The store has no transactional guarantee for concurrent writers, and the in-memory checkpointer disappears on restart. The offline extractor recognizes only a few explicit English phrases; the optional structured LLM extractor still needs validation on real consented data. Useful next steps are a persistent checkpoint store, concurrency control for topic updates, and tested memory decay or summarization. The synthetic labels and local scale timing do not establish production accuracy or latency.
+The CLI remains a local single-process example. The authenticated API uses durable PostgreSQL checkpoints and a single-writer lock for local LanceDB; it has not been validated with real consented users or at multi-replica scale. The offline extractor recognizes only a few explicit English phrases; the optional structured LLM extractor still needs validation on real consented data. Useful next steps are tested memory decay or summarization and a remote multi-writer memory store. The synthetic labels and local scale timing do not establish production accuracy or latency.
 
 The LongMemEval answer run indexed complete conversations as memory rows. A
 separate benchmark should measure the agent's fact extraction and update path
@@ -107,8 +157,8 @@ before claiming end-to-end memory quality.
 ## Development
 
 ```sh
-uv sync --locked
-uv run --offline pytest -q
+uv sync --locked --extra server
+uv run --offline --extra server pytest -q
 uv run --offline ruff check .
 uv run --offline ruff format --check .
 ```

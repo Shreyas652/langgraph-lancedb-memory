@@ -26,12 +26,21 @@ anthropic = ["langchain-anthropic==1.7.11"]
 bedrock = [
     "boto3>=1.40,<2",
 ]
+server = [
+    "fastapi>=0.115,<1",
+    "httpx>=0.27,<1",
+    "langgraph-checkpoint-postgres>=3,<4",
+    "psycopg[binary,pool]>=3.2,<4",
+    "pyjwt[crypto]>=2.10,<3",
+    "uvicorn>=0.30,<1",
+]
 
 [dependency-groups]
 dev = ["pytest==9.2.0", "ruff==0.17.6"]
 
 [project.scripts]
 agent-memory = "agent_memory.cli:main"
+agent-memory-api = "agent_memory.service:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/agent_memory"]

@@ -8,6 +8,34 @@ from agent_memory.llm import FakeLLM
 from agent_memory.store import MemoryStore
 
 
+class RecordingLLM:
+    def __init__(self):
+        self.turns = []
+
+    def respond(self, system_prompt, messages, recalled):
+        del system_prompt, recalled
+        self.turns.append([(message.type, message.content) for message in messages])
+        return "acknowledged"
+
+    def extract(self, user_text):
+        del user_text
+        return []
+
+
+def test_second_turn_passes_thread_history_to_model(tmp_path):
+    store = MemoryStore(tmp_path / "memory.lance", HashEmbedder())
+    llm = RecordingLLM()
+    graph = build_graph(store, llm)
+    config = {"configurable": {"thread_id": "alice:one"}}
+    graph.invoke({"user_id": "alice", "messages": [HumanMessage("Hello")]}, config)
+    graph.invoke({"user_id": "alice", "messages": [HumanMessage("What did I say?")]}, config)
+    assert llm.turns[1] == [
+        ("human", "Hello"),
+        ("ai", "acknowledged"),
+        ("human", "What did I say?"),
+    ]
+
+
 def test_new_thread_recalls_memory_from_previous_thread(tmp_path):
     store = MemoryStore(tmp_path / "memory.lance", HashEmbedder())
     graph = build_graph(store, FakeLLM())
